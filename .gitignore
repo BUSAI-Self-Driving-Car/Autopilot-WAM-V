@@ -1,28 +1,129 @@
-# Compiled Object files
+# Qt specific
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+*-build-*
+*.autosave
+Makefile
+*.user
+
+
+# Binaries
+bin/
+lib/
+
+
+# MATLAB temp files
+*.m~
+*.asv
+
+# MATLAB/Simulink code generation   
+slprj/
+codegen/
+
+# Compiled MATLAB binaries (mexmaci, mexmaci64, mexw32, mexw64, mexa64, etc.)
+*.mex*
+
+# Intermediate build files
+build/
+
+# AVR
+*.o.d
+.build_number
+
+# Compiled object files
 *.slo
 *.lo
 *.o
-*.obj
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
+# Compiled dynamic libraries
 *.dll
+*.so
+*.so.*
+*.dylib
 
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
+# Compiled static libraries
+*.lib
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
 *.out
 *.app
+*.class
+*.com
+
+# IntelliJ Idea
+.idea
+
+# Sublime Text
+*.sublime-workspace
+*.bak
+
+# Compressed files
+#   It's better to unpack these files and commit the raw source
+#   git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases
+*.log
+
+# LaTeX
+*.acn
+*.acr
+*.alg
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.fdb_latexmk
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.maf
+*.mtc
+*.mtc0
+*.nav
+*.nlo
+*.out
+*.pdfsync
+*.ps
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdy
+*.tdo
+.wisdom
+
+# OS generated files
+*~
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
