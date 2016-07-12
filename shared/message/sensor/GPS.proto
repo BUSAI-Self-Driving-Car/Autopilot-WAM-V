@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package message.sensor;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+import "Matrix.proto";
+
+message GPS {
+
+    enum FixType {
+        NO_FIX = 0;
+        //NO_FIX = 1;
+        FIX_2D = 2;
+        FIX_3D = 3;
+        RTCMCODE_DIFFERENTIAL = 4;
+        REAL_TIME_KINEMATIC_FLOATING = 5;
+        REAL_TIME_KINEMATIC_FIXED = 6;
+        EXTRAPOLATED = 8;
+    }
+
+    google.protobuf.Timestamp timestamp = 1;
+    FixType fix_type = 2;
+    uint32 satellites = 3;
+    vec3 y = 4;
+    mat33 Py = 5;
+}

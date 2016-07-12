@@ -5,14 +5,13 @@ moc_*.cpp
 qrc_*.cpp
 *-build-*
 *.autosave
+*.save
 Makefile
 *.user
-
 
 # Binaries
 bin/
 lib/
-
 
 # MATLAB temp files
 *.m~
@@ -36,6 +35,7 @@ build/
 *.slo
 *.lo
 *.o
+*.pyc
 
 # Compiled dynamic libraries
 *.dll

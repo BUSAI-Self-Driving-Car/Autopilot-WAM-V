@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message.sensor;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+import "Matrix.proto";
+
+message IMU {
+    google.protobuf.Timestamp timestamp = 1;
+    vec y = 2;
+    mat Py = 3;
+}

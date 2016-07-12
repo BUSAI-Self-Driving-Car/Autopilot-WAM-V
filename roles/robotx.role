@@ -1,0 +1,9 @@
+NUCLEAR_ROLE(
+    support::SignalCatcher
+    support::logging::ConsoleLogHandler
+    sensor::GPS
+    sensor::IMU
+    actuator::Torqeedo    
+    control::ModelPredictiveController
+    navigation::StateEstimator  
+)
