@@ -31,7 +31,7 @@ struct VehicleState {
         }
         else
         {
-            q = q / q.norm() ;
+            q = q / q.norm();
         }
         return std::move(q);
     }
@@ -54,14 +54,6 @@ struct VehicleState {
     static Eigen::Matrix3d Rnb(const XVector& x)
     {
         return opengnc::common::math::rotationQuaternion(thetanb(x));
-    }
-
-    static Eigen::Matrix3d Rnm(const XVector& x)
-    {
-        Eigen::Matrix3d Rnm;
-        Rnm = Eigen::AngleAxisd(thetanm(x), Eigen::Vector3d::UnitZ());
-
-        return Rnm;
     }
 
     static int parameters_length() { return 3; }
