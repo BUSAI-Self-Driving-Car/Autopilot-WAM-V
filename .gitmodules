@@ -1,0 +1,3 @@
+[submodule "libopengnc"]
+	path = libopengnc
+	url = https://github.com/opengnc/libopengnc
