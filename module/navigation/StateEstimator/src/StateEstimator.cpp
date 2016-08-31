@@ -1,5 +1,6 @@
 #include "StateEstimator.h"
 
+#include "utility/convert/yaml-eigen.h"
 #include "extension/Configuration.h"
 #include "message/sensor/IMU.h"
 #include "message/sensor/GPS.h"
@@ -20,6 +21,18 @@ namespace navigation {
 
         on<Configuration>("StateEstimator.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file StateEstimator.yaml
+
+            using namespace Eigen;
+            // IMU Parameters
+
+//            imuMeasurementModel.set_mag_scale(config["mag_scale"].as<Vector3d>());
+//            imuMeasurementModel.set_mag_vector(config["mag_vector"].as<Vector3d>());
+//            imuMeasurementModel.set_Rib(config["mag_vector"].as<Matrix3d>());
+//            imuMeasurementModel.set_rIBb(config["rIBb"].as<Vector3d>());
+//            imuMeasurementModel.set_gn(config["gn"].as<Vector3d>());
+
+            // GPS Parameters
+
         });
 
         on<Trigger<IMU>>().then("IMU Measurement", [this] (const IMU& meas) {

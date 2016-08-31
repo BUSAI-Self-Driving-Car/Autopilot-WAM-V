@@ -46,18 +46,16 @@ namespace navigation {
 
     private:
         StateDensity stateDensity;
+
         ProcessModel processModel;
-        MeasurementModelIMU imuMeasurementModel;
-        MeasurementModelGPS gpsMeasurementModel;
         ProcessUpdate processUpdate;
+
+        MeasurementModelIMU imuMeasurementModel;
         MeasurementUpdateIMU imuMeasurementUpdate;
+
+        MeasurementModelGPS gpsMeasurementModel;
         MeasurementUpdateGPS gpsMeasurementUpdate;
-
     };
-
-
-
-
 }
 }
 
