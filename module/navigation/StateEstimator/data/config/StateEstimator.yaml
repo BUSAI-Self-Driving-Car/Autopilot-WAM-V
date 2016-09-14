@@ -1,3 +1,5 @@
+lag_tolerance: 100
+
 # Process Model
 Q_omegaBNb_diag: [1e1, 1e1, 1e1]
 Q_aBNb_diag: [1, 1, 1]
@@ -19,4 +21,4 @@ mag_scale: 1
 mag_vector: [0.374917, 0.0403175, -0.926181] # Unit magnetic vector in {n}
 
 # Gps Measurement Model
-gpsOrigin: [-32.964079, 151.616130, 0] # Latitude, Longitude, Altitude
+gps_origin: [-32.964079, 151.616130, 0] # Latitude, Longitude, Altitude

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message.navigation;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+import "Matrix.proto";
+
+message StateEstimate {
+    google.protobuf.Timestamp timestamp = 1;
+    vec x = 2;
+    mat Px = 3;
+}

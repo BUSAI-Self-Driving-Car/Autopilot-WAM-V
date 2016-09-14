@@ -55,6 +55,12 @@ namespace navigation {
 
         MeasurementModelGPS gpsMeasurementModel;
         MeasurementUpdateGPS gpsMeasurementUpdate;
+
+        uint64_t lastUpdatedms;
+        unsigned int lagTolerance;
+
+        void timeUpdate(double timestep);
+        void emitState();
     };
 }
 }

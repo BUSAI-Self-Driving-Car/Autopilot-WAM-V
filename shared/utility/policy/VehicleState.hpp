@@ -72,6 +72,19 @@ struct VehicleState {
         x.segment<3>(13) = gbBNi;
     }
 
+    static void pack_state(XVector& x,
+                           const Eigen::Vector3d& rBNn,
+                           const Eigen::Vector4d& thetanb,
+                           const Eigen::Vector3d& vBNb,
+                           const Eigen::Vector3d& omegaBNb)
+    {
+        x.segment<3>(0) = rBNn;
+        x.segment<4>(3) = thetanb;
+        x.segment<3>(7) = vBNb;
+        x.segment<3>(10) = omegaBNb;
+        x.segment<3>(13) = Eigen::Vector3d::Zero();
+    }
+
     static void apply_constraints(XVector& x)
     {
          x.segment(3,4) = thetanb(x);
