@@ -1,0 +1,3 @@
+# Interface that connects to the internet
+allow-hotplug enp3s0
+iface enp3s0 inet dhcp
