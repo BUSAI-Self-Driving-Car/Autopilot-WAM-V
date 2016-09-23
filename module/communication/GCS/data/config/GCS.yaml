@@ -1,0 +1,2 @@
+radio_device: "/dev/ttyUSB1"
+radio_baud: 115200

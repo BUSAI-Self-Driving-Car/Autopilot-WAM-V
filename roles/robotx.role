@@ -5,5 +5,6 @@ NUCLEAR_ROLE(
     sensor::IMU
     actuator::Torqeedo    
     control::ModelPredictiveController
-    navigation::StateEstimator  
+    navigation::StateEstimator
+    communication::GCS
 )
