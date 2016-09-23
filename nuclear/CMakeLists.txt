@@ -37,14 +37,14 @@ FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shared)
 # Settings for the compiler to make NUClear work
 INCLUDE(NUClearCompilerSettings)
 
+# Add the subdirectory for our messages
+ADD_SUBDIRECTORY("message")
+
 # Add the subdirectory for our utilities
 ADD_SUBDIRECTORY("utility")
 
 # Add the subdirectory for our extensions
 ADD_SUBDIRECTORY("extension")
-
-# Add the subdirectory for our messages
-ADD_SUBDIRECTORY("message")
 
 # Add the subdirectory for our roles
 ADD_SUBDIRECTORY("roles")

@@ -7,22 +7,22 @@ namespace message {
     namespace conversion {
         namespace math {
 
-            using vec    = Eigen::VectorXd;
-            using fvec   = Eigen::VectorXf;
-            using ivec   = Eigen::VectorXi;
+            using vec    = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+            using fvec   = Eigen::Matrix<float, Eigen::Dynamic, 1>;
+            using ivec   = Eigen::Matrix<int, Eigen::Dynamic, 1>;
             using uvec   = Eigen::Matrix<unsigned int, Eigen::Dynamic, 1>;
             using cvec   = Eigen::Matrix<uint8_t, Eigen::Dynamic, 1>;
-            using vec2   = Eigen::Vector2d;
-            using fvec2  = Eigen::Vector2f;
-            using ivec2  = Eigen::Vector2i;
+            using vec2   = Eigen::Matrix<double, 2, 1>;
+            using fvec2  = Eigen::Matrix<float, 2, 1>;
+            using ivec2  = Eigen::Matrix<int, 2, 1>;
             using uvec2  = Eigen::Matrix<unsigned int, 2, 1>;
-            using vec3   = Eigen::Vector3d;
-            using fvec3  = Eigen::Vector3f;
-            using ivec3  = Eigen::Vector3i;
+            using vec3   = Eigen::Matrix<double, 3, 1>;
+            using fvec3  = Eigen::Matrix<float, 3, 1>;
+            using ivec3  = Eigen::Matrix<int, 3, 1>;
             using uvec3  = Eigen::Matrix<unsigned int, 3, 1>;
-            using vec4   = Eigen::Vector4d;
-            using fvec4  = Eigen::Vector4f;
-            using ivec4  = Eigen::Vector4i;
+            using vec4   = Eigen::Matrix<double, 4, 1>;
+            using fvec4  = Eigen::Matrix<float, 4, 1>;
+            using ivec4  = Eigen::Matrix<int, 4, 1>;
             using uvec4  = Eigen::Matrix<unsigned int, 4, 1>;
 
             using mat    = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
