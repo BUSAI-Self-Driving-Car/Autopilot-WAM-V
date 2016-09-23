@@ -1,3 +1,6 @@
 [submodule "libopengnc"]
 	path = libopengnc
 	url = https://github.com/opengnc/libopengnc
+[submodule "libdatatransfer"]
+	path = libdatatransfer
+	url = https://github.com/thomash505/libdatatransfer

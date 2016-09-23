@@ -37,6 +37,7 @@ class File:
             '2<string>',
             '2<map>',
             '2<vector>',
+            '2<array>',
             '2<memory>',
             '4"{}"'.format(self.name[:-6] + '.pb.h')
         }
@@ -46,6 +47,8 @@ class File:
         for d in self.dependencies:
             if d in ['Vector.proto', 'Matrix.proto']:
                 includes.add('4"message/conversion/proto_matrix.h"')
+            elif d in ['EnhancedMessage.proto']:
+                pass # We don't need to do anything for these ones
             elif d in ['Transform.proto']:
                 includes.add('4"message/conversion/proto_transform.h"')
             elif d in ['google/protobuf/timestamp.proto', 'google/protobuf/duration.proto']:

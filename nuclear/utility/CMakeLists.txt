@@ -12,6 +12,7 @@ SET(NUCLEAR_UTILITY_INCLUDE_DIRS
     ${utility_binary_include_dir}
     CACHE INTERNAL "Include directories for the utility folder and generated sources")
 INCLUDE_DIRECTORIES(${NUCLEAR_UTILITY_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${NUCLEAR_MESSAGE_INCLUDE_DIRS})
 
 # Get the relative path to our utility directory
 GET_FILENAME_COMPONENT(utility_path "${NUCLEAR_UTILITY_DIR}" ABSOLUTE)
@@ -43,7 +44,7 @@ ELSE()
         ADD_LIBRARY(nuclear_utility utility.cpp ${src})
 
         # Link our additional shared libraries
-        TARGET_LINK_LIBRARIES(nuclear_utility ${NUCLEAR_ADDITIONAL_SHARED_LIBRARIES})
+        TARGET_LINK_LIBRARIES(nuclear_utility ${NUCLEAR_ADDITIONAL_SHARED_LIBRARIES} ${NUCLEAR_MESSAGE_LIBRARIES})
 
         # Add to our list of NUClear utility libraries
         SET(NUCLEAR_UTILITY_LIBRARIES nuclear_utility CACHE INTERNAL "List of libraries that are built as utilities" FORCE)

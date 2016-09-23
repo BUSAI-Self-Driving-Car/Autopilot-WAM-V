@@ -1,4 +1,4 @@
-from textutil import indent, dedent, to_camel_case
+from textutil import indent, dedent
 from Field import Field
 from Enum import Enum
 
@@ -40,9 +40,9 @@ class Message:
             return ('{}();'.format(self.name),
                     '{}::{}() {{}}'.format(cpp_fqn, self.name))
         else:
-            field_list = ', '.join(['{} const& _{}'.format(v.cpp_type, to_camel_case(v.name)) for v in self.fields])
-            default_field_list = ', '.join(['{} const& _{} = {}'.format(v.cpp_type, to_camel_case(v.name), v.default_value if v.default_value else '{}()'.format(v.cpp_type)) for v in self.fields])
-            field_set = ', '.join(['{0}(_{0})'.format(to_camel_case(v.name)) for v in self.fields])
+            field_list = ', '.join(['{} const& _{}'.format(v.cpp_type, v.name) for v in self.fields])
+            default_field_list = ', '.join(['{} const& _{} = {}'.format(v.cpp_type, v.name, v.default_value if v.default_value else '{}()'.format(v.cpp_type)) for v in self.fields])
+            field_set = ', '.join(['{0}(_{0})'.format(v.name) for v in self.fields])
 
             return ('{}({});'.format(self.name, default_field_list),
                     '{}::{}({}) : {} {{}}'.format(cpp_fqn, self.name, field_list, field_set))
@@ -69,43 +69,53 @@ class Message:
                 elif v.map_type:
                     if v.type[1].bytes_type:
                         lines.append(indent('for (auto& _v : proto.{}()) {{'.format(v.name)))
-                        lines.append(indent('{0}[_v.first].insert(std::end({0}[_v.first]), std::begin(_v.second), std::end(_v.second));'.format(to_camel_case(v.name)), 8))
+                        lines.append(indent('{0}[_v.first].insert(std::end({0}[_v.first]), std::begin(_v.second), std::end(_v.second));'.format(v.name), 8))
                         lines.append(indent('}'))
 
                     elif v.type[1].special_cpp_type:
                         lines.append(indent('for (auto& _v : proto.{}()) {{'.format(v.name.lower())))
-                        lines.append(indent('{}[_v.first] << _v.second;'.format(to_camel_case(v.name)), 8))
+                        lines.append(indent('{}[_v.first] << _v.second;'.format(v.name), 8))
                         lines.append(indent('}'))
 
                     else:  # Basic and other types are handled the same
-                        lines.append(indent('{0}.insert(std::begin(proto.{1}()), std::end(proto.{1}()));'.format(to_camel_case(v.name), v.name.lower()), 8))
+                        lines.append(indent('{0}.insert(std::begin(proto.{1}()), std::end(proto.{1}()));'.format(v.name, v.name.lower()), 8))
 
                 elif v.repeated:
                     if v.bytes_type:
-                        lines.append(indent('{}.resize(proto.{}_size());'.format(to_camel_case(v.name), v.name)))
-                        lines.append(indent('for (size_t _i = 0; _i < {}.size(); ++_i) {{'.format(to_camel_case(v.name))))
-                        lines.append(indent('{0}[_i].insert(std::end({0}[_i]), std::begin(proto.{1}(_i)), std::end(proto.{1}(_i)));'.format(to_camel_case(v.name), v.name.lower()), 8))
+                        lines.append(indent('{0}.resize(proto.{0}_size());'.format(v.name.lower())))
+                        lines.append(indent('for (size_t _i = 0; _i < {0}.size(); ++_i) {{'.format(v.name)))
+                        lines.append(indent('{0}[_i].insert(std::end({0}[_i]), std::begin(proto.{1}(_i)), std::end(proto.{1}(_i)));'.format(v.name, v.name.lower()), 8))
                         lines.append(indent('}'))
 
                     elif v.special_cpp_type:
-                        # Add the top of our for loop for the repeated field
-                        lines.append(indent('{}.resize(proto.{}_size());'.format(to_camel_case(v.name), v.name)))
-                        lines.append(indent('for (size_t _i = 0; _i < {}.size(); ++_i) {{'.format(to_camel_case(v.name))))
-                        lines.append(indent('{}[_i] << proto.{}(_i);'.format(to_camel_case(v.name), v.name), 8))
-                        lines.append(indent('}'))
+                        if v.array_size > 0:
+                            lines.append(indent('for (size_t _i = 0; _i < {0}.size() && _i < size_t(proto.{1}_size()); ++_i) {{'.format(v.name, v.name.lower())))
+                            lines.append(indent('{0}[_i] << proto.{1}(_i);'.format(v.name, v.name.lower()), 8))
+                            lines.append(indent('}'))
+                        else:
+                            # Add the top of our for loop for the repeated field
+                            lines.append(indent('{0}.resize(proto.{1}_size());'.format(v.name, v.name.lower())))
+                            lines.append(indent('for (size_t _i = 0; _i < {0}.size(); ++_i) {{'.format(v.name)))
+                            lines.append(indent('{0}[_i] << proto.{1}(_i);'.format(v.name, v.name.lower()), 8))
+                            lines.append(indent('}'))
 
                     else:  # Basic and other types are handled the same
-                        lines.append(indent('{0}.insert(std::end({0}), std::begin(proto.{1}()), std::end(proto.{1}()));'.format(to_camel_case(v.name), v.name.lower())))
+                        if v.array_size > 0:
+                            lines.append(indent('for (size_t _i = 0; _i < {0}.size() && _i < size_t(proto.{1}_size()); ++_i) {{'.format(v.name, v.name.lower())))
+                            lines.append(indent('{0}[_i] = proto.{1}(_i);'.format(v.name, v.name.lower()), 8))
+                            lines.append(indent('}'))
+                        else:
+                            lines.append(indent('{0}.insert(std::end({0}), std::begin(proto.{1}()), std::end(proto.{1}()));'.format(v.name, v.name.lower())))
 
                 else:
                     if v.bytes_type:
-                        lines.append(indent('{0}.insert(std::end({0}), std::begin(proto.{1}()), std::end(proto.{1}()));'.format(to_camel_case(v.name), v.name.lower())))
+                        lines.append(indent('{0}.insert(std::end({0}), std::begin(proto.{1}()), std::end(proto.{1}()));'.format(v.name, v.name.lower())))
 
                     elif v.special_cpp_type:
-                        lines.append(indent('{} << proto.{}();'.format(to_camel_case(v.name), v.name.lower())))
+                        lines.append(indent('{} << proto.{}();'.format(v.name, v.name.lower())))
 
                     else:  # Basic and other types are handled the same
-                        lines.append(indent('{} = proto.{}();'.format(to_camel_case(v.name), v.name.lower())))
+                        lines.append(indent('{} = proto.{}();'.format(v.name, v.name.lower())))
 
             lines.append('}')
 
@@ -134,7 +144,7 @@ class Message:
 
                 elif v.map_type:
                     # Add the top of our for loop for the repeated field
-                    lines.append(indent('for (auto& _v : {}) {{'.format(to_camel_case(v.name))))
+                    lines.append(indent('for (auto& _v : {}) {{'.format(v.name)))
 
                     if v.type[1].bytes_type:
                         lines.append(indent('(*proto.mutable_{}())[_v.first].append(std::begin(_v.second), std::end(_v.second));'.format(v.name), 8))
@@ -145,9 +155,9 @@ class Message:
 
                     lines.append(indent('}'))
 
-                elif v.repeated:
+                elif v.repeated: # We don't need to handle array here specially because it's the same
                     # Add the top of our for loop for the repeated field
-                    lines.append(indent('for (auto& _v : {}) {{'.format(to_camel_case(v.name))))
+                    lines.append(indent('for (auto& _v : {}) {{'.format(v.name)))
 
                     if v.bytes_type:
                         lines.append(indent('proto.add_{}()->append(std::begin(_v), std::end(_v));'.format(v.name.lower()), 8))
@@ -162,13 +172,13 @@ class Message:
 
                 else:
                     if v.bytes_type:
-                        lines.append(indent('proto.mutable_{0}()->append(std::begin({1}), std::end({1}));'.format(v.name.lower(), to_camel_case(v.name)), 8))
+                        lines.append(indent('proto.mutable_{0}()->append(std::begin({1}), std::end({1}));'.format(v.name.lower(), v.name), 8))
                     elif v.special_cpp_type:
-                        lines.append(indent('*proto.mutable_{}() << {};'.format(v.name.lower(), to_camel_case(v.name))))
+                        lines.append(indent('*proto.mutable_{}() << {};'.format(v.name.lower(), v.name)))
                     elif v.basic:
-                        lines.append(indent('proto.set_{}({});'.format(v.name.lower(), to_camel_case(v.name))))
+                        lines.append(indent('proto.set_{}({});'.format(v.name.lower(), v.name)))
                     else:
-                        lines.append(indent('*proto.mutable_{}() = {};'.format(v.name.lower(), to_camel_case(v.name))))
+                        lines.append(indent('*proto.mutable_{}() = {};'.format(v.name.lower(), v.name)))
 
             lines.append(indent('return proto;'))
             lines.append('}')

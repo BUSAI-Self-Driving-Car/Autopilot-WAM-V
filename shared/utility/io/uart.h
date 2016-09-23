@@ -1,35 +1,46 @@
-#ifndef UART_H
-#define UART_H
+#ifndef UTILITY_IO_UART_H
+#define UTILITY_IO_UART_H
 
-#include <boost/asio.hpp>
+#include <string>
 
 namespace utility {
 namespace io {
 
-class uart {
-public:
-    using char_type = uint8_t;
-    uart();
-    void open(const std::string& device, unsigned int baud_rate);
-    void close();
-    uart(const std::string& device, unsigned int baud_rate);
-    ~uart();
-    size_t write(const uint8_t* buffer, size_t size);
-    boost::asio::serial_port::native_handle_type get_native_handle() { return port.native_handle(); }
-    int read();
-    int get() { return read(); }
-    const boost::system::error_code& error_code() const { return ec; }
-    bool is_open() { return port.is_open(); }
-	bool good() { return is_open(); }
-	void flush() {}
+    class uart {
+    private:
+        std::string device;
+        int fd;
 
-private:
-    boost::asio::io_service io_service;
-    boost::asio::serial_port port;
-    boost::system::error_code ec;
-};
+        void set_baud(const int& baud);
+
+    public:
+
+        using char_type = char;
+
+        explicit uart();
+
+        explicit uart(const std::string& device, const unsigned int& baud_rate = 57600);
+
+        ~uart();
+
+        int native_handle();
+
+        bool good() const;
+
+        void flush();
+
+        int get();
+
+        ssize_t read(void* buf, size_t count);
+
+        ssize_t write(const void* buf, size_t count);
+
+        void open(const std::string& device, const unsigned int& baud_rate = 57600);
+
+        void close();
+    };
 
 }
 }
 
-#endif // UART_H
+#endif  // UTILITY_IO_UART_H
