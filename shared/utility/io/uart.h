@@ -31,9 +31,13 @@ namespace io {
 
         int get();
 
+        void set_rts(int value);
+        void set_dtr(int value);
+
         ssize_t read(void* buf, size_t count);
 
         ssize_t write(const void* buf, size_t count);
+        ssize_t blocking_write(const void* buf, size_t count);
 
         void open(const std::string& device, const unsigned int& baud_rate = 57600);
 

@@ -70,6 +70,21 @@ namespace io {
 namespace utility {
 namespace io {
 
+    void uart::set_rts(int value)
+    {
+        int flag = TIOCM_RTS;
+        if (value) { ioctl(fd, TIOCMBIS, &flag); }
+        else { ioctl(fd, TIOCMBIC, &flag); }
+
+    }
+
+    void uart::set_dtr(int value)
+    {
+        int flag = TIOCM_DTR;
+        if (value) { ioctl(fd, TIOCMBIS, &flag); }
+        else { ioctl(fd, TIOCMBIC, &flag); }
+    }
+
     void uart::set_baud(const int& baud) {
 
         // Do our setup for the tio settings, you must set BS38400 in order to set custom baud using "baud rate aliasing"
@@ -142,7 +157,13 @@ namespace io {
     }
 
     ssize_t uart::write(const void* buf, size_t count) {
-        return ::write(fd, buf, count);
+        return  ::write(fd, buf, count);
+    }
+
+    ssize_t uart::blocking_write(const void* buf, size_t count) {
+        auto n =  ::write(fd, buf, count);
+        tcdrain(fd);
+        return n;
     }
 
 }
