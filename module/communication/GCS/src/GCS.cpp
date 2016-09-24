@@ -15,7 +15,7 @@ namespace communication {
             try {
                 // Connect to Radio
                 std::string radioDevice = config["radio_device"].as<std::string>();
-                unsigned int radioBaud = config["radion_baud"].as<unsigned int>();
+                unsigned int radioBaud = config["radio_baud"].as<unsigned int>();
                 uart.close();
                 uart.open(radioDevice, radioBaud);
                 log<NUClear::INFO>("Open radio on device:", radioDevice," baud:", radioBaud);

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message.communication;
+
+message ControllerCommand {
+    uint64 time_stamp_ms = 1;
+
+    float motor1_thrust = 2;
+    float motor2_thrust = 3;
+
+    float motor1_angle = 4;
+    float motor2_angle = 5;
+}
