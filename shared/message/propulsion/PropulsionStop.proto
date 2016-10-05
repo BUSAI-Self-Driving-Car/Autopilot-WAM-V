@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message PropulsionStop
+{
+    google.protobuf.Timestamp timestamp = 1;
+}
+

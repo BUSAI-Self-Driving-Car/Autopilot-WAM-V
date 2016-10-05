@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message PropulsionSetpoint
+{
+    message Thruster
+    {
+        float throttle = 1;
+        float azimuth = 2;
+    }
+
+    google.protobuf.Timestamp timestamp = 1;
+    Thruster port = 2;
+    Thruster starboard = 3;
+}
+

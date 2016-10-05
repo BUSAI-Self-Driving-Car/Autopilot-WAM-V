@@ -3,7 +3,7 @@ NUCLEAR_ROLE(
     support::logging::ConsoleLogHandler
     sensor::GPS
     sensor::IMU
-    actuator::Torqeedo    
+    actuator::Propulsion
     control::ModelPredictiveController
     navigation::StateEstimator
     communication::GCS
