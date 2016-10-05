@@ -41,7 +41,9 @@ namespace extension {
         template <typename DSL>
         static inline std::shared_ptr<T> get(NUClear::threading::Reaction& t) {
 
-            return NUClear::dsl::store::ThreadStore<std::shared_ptr<T>>::value;
+            auto data = store::ThreadStore<std::vector<char>>::value;
+
+            return std::make_shared<TData>(util::serialise::Serialise<T>::deserialise(*data));
         }
 
         static void emit(PowerPlant&, std::shared_ptr<TData> data) {
