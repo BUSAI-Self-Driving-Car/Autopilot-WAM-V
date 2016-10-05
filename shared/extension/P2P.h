@@ -13,6 +13,13 @@ namespace extension {
         std::shared_ptr<NUClear::threading::Reaction> reaction;
     };
 
+    struct P2PEmit {
+        P2PEmit() : target(""), hash(), data(), reliable(false) {}
+
+        std::array<uint64_t, 2> hash;
+        std::vector<char> data;
+    };
+
     template <typename T>
     struct P2P {
 
@@ -35,6 +42,22 @@ namespace extension {
         static inline std::shared_ptr<T> get(NUClear::threading::Reaction& t) {
 
             return NUClear::dsl::store::ThreadStore<std::shared_ptr<T>>::value;
+        }
+
+        static void emit(PowerPlant&, std::shared_ptr<TData> data) {
+
+            // Set our data in the store
+            store::DataStore<TData>::set(data);
+
+            static void emit(PowerPlant& powerplant, std::shared_ptr<TData> data) {
+
+                auto e = std::make_unique<P2PEmit>();
+
+                e->hash = util::serialise::Serialise<TData>::hash();
+                e->data = util::serialise::Serialise<TData>::serialise(*data);
+
+                powerplant.emit<Direct>(e);
+            }
         }
     };
 
