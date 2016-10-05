@@ -32,7 +32,7 @@ namespace extension {
         }
 
         template <typename DSL>
-        static inline std::shared_ptr<::extension::Configuration> get(threading::Reaction& t) {
+        static inline std::shared_ptr<T> get(threading::Reaction& t) {
 
             return store::ThreadStore<std::shared_ptr<T>>::value;
         }
