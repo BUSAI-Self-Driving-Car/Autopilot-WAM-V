@@ -39,7 +39,8 @@ class File:
             '2<vector>',
             '2<array>',
             '2<memory>',
-            '4"{}"'.format(self.name[:-6] + '.pb.h')
+            '4"{}"'.format(self.name[:-6] + '.pb.h'),
+            '5"message/MessageBase.h"'
         }
 
         # We use a dirty hack here of putting a priority on each header
