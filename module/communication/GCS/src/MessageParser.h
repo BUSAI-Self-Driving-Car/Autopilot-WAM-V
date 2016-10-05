@@ -29,7 +29,7 @@ namespace communication {
         MessageParser(utility::io::uart& uart);
         void read();
         void reset();
-        void registerMessageHandler(uint8_t type, std::function<void(const uint8_t *, uint32_t)> handler);
+        void registerMessageHandler(uint8_t type, std::function<void(const uint8_t *, size_t)> handler);
 
     private:
         uint8_t MESSAGE_START[3];
@@ -39,7 +39,7 @@ namespace communication {
         uint8_t messageType;
         uint32_t messageSize;
         std::vector<uint8_t> messageData;
-        std::map<uint8_t, std::function<void(const uint8_t*, uint32_t)>>  messageHandlers;
+        std::map<uint8_t, std::function<void(const uint8_t*, size_t)>>  messageHandlers;
 
     };
 }

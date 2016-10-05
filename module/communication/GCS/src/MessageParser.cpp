@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <iterator>
 #include <boost/crc.hpp>
+#include <iostream>
+#include <iomanip>
 
 using namespace module::communication;
 
@@ -22,28 +24,35 @@ void MessageParser::reset() {
     messageType = 0;
 }
 
-void MessageParser::registerMessageHandler(uint8_t type, std::function<void(const uint8_t*, uint32_t)> handler)
+void MessageParser::registerMessageHandler(uint8_t type, std::function<void(const uint8_t*, size_t)> handler)
 {
     messageHandlers[type] = handler;
 }
 
 void MessageParser::read()
 {
-    if (parseState == PARSE_STATE::DATA && messageSize > readbuffer.size()) {
-        uint32_t nBytes =  messageSize - readbuffer.size();
-        uart.read(readbuffer.data(), nBytes);
-    }
-    else {
+
+    ssize_t bytes_read=0;
+
+//    if (parseState == PARSE_STATE::DATA && messageSize > readbuffer.size()) {
+//        uint32_t nBytes =  messageSize - readbuffer.size();
+//        bytes_read = uart.read(readbuffer.data() + readbuffer.size(), nBytes);
+
+//        if (bytes_read < 1 ) return;
+
+//        readbuffer.resize(readbuffer.size() + bytes_read);
+//    }
+//    else {
         uint8_t c;
-        auto bytes_read = uart.read(&c,1);
+        bytes_read = uart.read(&c,1);
 
         if (bytes_read > 1) {
             throw std::logic_error("uart read more bytes than requested");
         }
-        if (bytes_read == 0) return;
+        if (bytes_read <1 ) return;
 
         readbuffer.push_back(c);
-    }
+//    }
 
     auto len = readbuffer.size();
 
@@ -82,6 +91,7 @@ void MessageParser::read()
                 readbuffer.resize(0);
                 readbuffer.reserve(messageSize);
                 parseState = PARSE_STATE::DATA;
+
             }
             break;
 
@@ -89,30 +99,31 @@ void MessageParser::read()
             if (len == messageSize) {
                  messageData.resize(0);
                  messageData.reserve(len);
-                 std::copy(readbuffer.begin(),readbuffer.end(),back_inserter(messageData));
+                 messageData.insert(messageData.begin(), readbuffer.begin(), readbuffer.end());
                  readbuffer.resize(0);
                  parseState = PARSE_STATE::CRC;
             }
             break;
          case PARSE_STATE::CRC :
-            if (len == 4) {
+            if (len == 4 &&  messageData.size() == messageSize) {
                 boost::crc_32_type crc32;
-                crc32.process_bytes(messageData.data(),messageData.size());
-
+                crc32.process_bytes(messageData.data(), messageData.size());
+                std::reverse(readbuffer.begin(), readbuffer.end());
                 auto checksum = (*(reinterpret_cast<const boost::crc_32_type::value_type*>(readbuffer.data())));
                 if (crc32.checksum() == checksum) {
 
                     if (messageHandlers.find(messageType) != messageHandlers.end()) {
-                        messageHandlers[messageType](messageData.data(), messageSize);
+                        messageHandlers[messageType](messageData.data(), messageData.size());
                     }
-                }
+                }               
+
                 readbuffer.resize(0);
                 parseState = PARSE_STATE::WAIT;
             }
             break;
 
         default:
-            throw std::runtime_error("Unkown PARSE STATE");
+            throw std::runtime_error("Unknown PARSE STATE");
         }
     }
 }
