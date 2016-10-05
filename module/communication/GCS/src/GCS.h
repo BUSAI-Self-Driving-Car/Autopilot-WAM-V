@@ -41,7 +41,7 @@ namespace communication {
         utility::io::uart uart;
         MessageParser messageParser;
 
-        void onControllerCommand(const uint8_t* buffer, size_t size);
+        void onControllerCommand(const std::vector<uint8_t>& buffer);
     };
 }
 }
