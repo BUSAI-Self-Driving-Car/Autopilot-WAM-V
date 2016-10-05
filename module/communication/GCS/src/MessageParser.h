@@ -11,11 +11,6 @@ namespace communication {
 
     class MessageParser
     {
-        static const size_t HEADER_SIZE = 8;
-        static const size_t CHECKSUM_SIZE = 4;
-        static const size_t TYPE_OFFSET = 3;
-        static const size_t SIZE_OFFSET = 4;
-
         enum PARSE_STATE {
             WAIT,
             TYPE,
@@ -28,17 +23,17 @@ namespace communication {
         MessageParser(utility::io::uart& uart);
         void read();
         void reset();
-        void registerMessageHandler(uint8_t type, std::function<void(const std::vector<uint8_t>&)> handler);
+        void registerMessageHandler(uint32_t type, std::function<void(const std::vector<char>&)> handler);
 
     private:
-        uint8_t MESSAGE_START[3];
+        char MESSAGE_START[3];
         utility::io::uart& uart;
-        std::vector<uint8_t> readbuffer;
+        std::vector<char> readbuffer;
         PARSE_STATE parseState;
-        uint8_t messageType;
+        uint32_t messageType;
         uint32_t messageSize;
-        std::vector<uint8_t> messageData;
-        std::map<uint8_t, std::function<void(const std::vector<uint8_t>&)>>  messageHandlers;
+        std::vector<char> messageData;
+        std::map<uint32_t, std::function<void(const std::vector<char>&)>>  messageHandlers;
 
     };
 }

@@ -14,7 +14,7 @@ namespace extension {
     };
 
     struct P2PEmit {
-        P2PEmit() : target(""), hash(), data(), reliable(false) {}
+        P2PEmit() : hash(), data() {}
 
         std::array<uint64_t, 2> hash;
         std::vector<char> data;
@@ -41,25 +41,19 @@ namespace extension {
         template <typename DSL>
         static inline std::shared_ptr<T> get(NUClear::threading::Reaction& t) {
 
-            auto data = store::ThreadStore<std::vector<char>>::value;
+            auto data = NUClear::dsl::store::ThreadStore<std::vector<char>>::value;
 
-            return std::make_shared<TData>(util::serialise::Serialise<T>::deserialise(*data));
+            return std::make_shared<T>(NUClear::util::serialise::Serialise<T>::deserialise(*data));
         }
 
-        static void emit(PowerPlant&, std::shared_ptr<TData> data) {
+        static void emit(NUClear::PowerPlant& powerplant, std::shared_ptr<T> data) {
 
-            // Set our data in the store
-            store::DataStore<TData>::set(data);
+            auto e = std::make_unique<P2PEmit>();
 
-            static void emit(PowerPlant& powerplant, std::shared_ptr<TData> data) {
+            e->hash = NUClear::util::serialise::Serialise<T>::hash();
+            e->data = NUClear::util::serialise::Serialise<T>::serialise(*data);
 
-                auto e = std::make_unique<P2PEmit>();
-
-                e->hash = util::serialise::Serialise<TData>::hash();
-                e->data = util::serialise::Serialise<TData>::serialise(*data);
-
-                powerplant.emit<Direct>(e);
-            }
+            powerplant.emit<NUClear::dsl::word::emit::Direct>(e);
         }
     };
 
