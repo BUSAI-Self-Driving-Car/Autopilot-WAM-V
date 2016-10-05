@@ -2,6 +2,6 @@ NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
     extension::FileWatcher
-    extension::P2P
+    extension::SerialP2P
     communication::GCS
 )

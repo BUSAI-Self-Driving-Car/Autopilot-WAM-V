@@ -1,5 +1,5 @@
-P2P
-===
+SerialP2P
+=========
 
 ## Description
 

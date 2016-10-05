@@ -10,31 +10,31 @@ namespace extension {
         P2PListen() : hash(), reaction() {}
 
         std::array<uint64_t, 2> hash;
-        std::shared_ptr<threading::Reaction> reaction;
+        std::shared_ptr<NUClear::threading::Reaction> reaction;
     };
 
     template <typename T>
     struct P2P {
 
         template <typename DSL, typename TFunc>
-        static inline threading::ReactionHandle bind(Reactor& reactor, const std::string& label, TFunc&& callback) {
+        static inline NUClear::threading::ReactionHandle bind(NUClear::Reactor& reactor, const std::string& label, TFunc&& callback) {
 
             auto task = std::make_unique<P2PListen>();
 
-            task->hash = util::serialise::Serialise<TData>::hash();
-            task->reaction = util::generate_reaction<DSL, P2PListen>(reactor, label, std::forward<TFunc>(callback));
+            task->hash = NUClear::util::serialise::Serialise<T>::hash();
+            task->reaction = NUClear::util::generate_reaction<DSL, P2PListen>(reactor, label, std::forward<TFunc>(callback));
 
-            threading::ReactionHandle handle(task->reaction);
+            NUClear::threading::ReactionHandle handle(task->reaction);
 
-            reactor.powerplant.emit<emit::Direct>(task);
+            reactor.powerplant.emit<NUClear::dsl::word::emit::Direct>(task);
 
             return handle;
         }
 
         template <typename DSL>
-        static inline std::shared_ptr<T> get(threading::Reaction& t) {
+        static inline std::shared_ptr<T> get(NUClear::threading::Reaction& t) {
 
-            return store::ThreadStore<std::shared_ptr<T>>::value;
+            return NUClear::dsl::store::ThreadStore<std::shared_ptr<T>>::value;
         }
     };
 
