@@ -1,9 +1,13 @@
+#include <thread>
 #include "Stepper.h"
-
-
 
 namespace module {
 namespace actuator {
+
+Stepper::Stepper(utility::io::uart& rs485)
+    : rs485(rs485)
+    , homed(false)
+{}
 
 void Stepper::read(){
 
@@ -194,6 +198,7 @@ void Stepper::motorHome(){
     // @dnPX=0 (position) @dnEX=0 (encoder) check not sure if internal or external
 
     while(!minLim){
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
        // wait for motor status, -Limit error code (possibly add in +Limit also in case)
     }
 
@@ -205,6 +210,7 @@ void Stepper::motorHome(){
     command("@01J+","move");
 
     while(!maxLim){
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         // wait for motor status, +Limit error code
     }
 
@@ -230,7 +236,7 @@ void Stepper::motorHome(){
     // set this to position zero (for "home")
     command("@01PX=0","");
 
-
+    homed = true;
 }
 
 void Stepper::motorEnable(bool motEn){
@@ -266,7 +272,7 @@ void Stepper::motorStop(bool motStop){
     }
 }
 
-void Stepper::bearing(float bear){
+void Stepper::azimuth(float bear){
 
     // convert input target bearing into pulse postion
 

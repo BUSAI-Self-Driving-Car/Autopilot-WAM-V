@@ -3,6 +3,9 @@
 #include "extension/Configuration.h"
 #include "extension/P2P.h"
 #include "message/communication/ControllerCommand.h"
+#include "message/propulsion/PropulsionSetpoint.h"
+#include <functional>
+
 
 namespace module {
 namespace communication {
@@ -19,12 +22,12 @@ namespace communication {
         });
 
         on<P2P<ControllerCommand>>().then("Read", [this](const ControllerCommand& controllerCommand){
-            log("Controller Command");
-            log("time_stamp_ms:", controllerCommand.time_stamp_ms);
-            log("motor1_thrust:", controllerCommand.motor1_thrust);
-            log("motor2_thrust:", controllerCommand.motor2_thrust);
-            log("motor1_angle:", controllerCommand.motor1_angle);
-            log("motor2_angle:", controllerCommand.motor2_angle);
+            auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+            setpoint->port.throttle = controllerCommand.motor1_thrust;
+            setpoint->port.azimuth = controllerCommand.motor1_angle;
+            setpoint->starboard.throttle = controllerCommand.motor2_thrust;
+            setpoint->starboard.azimuth = controllerCommand.motor2_angle;
+            emit(setpoint);
         });
     }
 }

@@ -1,0 +1,12 @@
+thrusters:
+  port:
+    torqeedo_device: "/dev/ttyS0"
+    torqeedo_baud: 19200
+    stepper_device: "/dev/ttyUSB0"
+    stepper_baud: 9600
+
+  starboard:
+    torqeedo_device: "/dev/ttyS1"
+    torqeedo_baud: 19200
+    stepper_device: "/dev/ttyUSB1"
+    stepper_baud: 9600
