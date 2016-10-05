@@ -25,13 +25,9 @@ namespace communication {
                 uart.open(radioDevice, radioBaud);
                 log<NUClear::INFO>("Open radio on device:", radioDevice," baud:", radioBaud);
 
-
-
                 messageParser.registerMessageHandler(MSG_TYPES::CONTROLLER_COMMAND,
-                                                     std::bind(&GCS::onControllerCommand,
-                                                               this,
-                                                               std::placeholders::_1,
-                                                               std::placeholders::_2));
+                                                     [this] (const std::vector<uint8_t>& buffer) { onControllerCommand(buffer); } );
+
             }
             catch(std::exception& ex) {
                 log<NUClear::ERROR>("Failed to configure: ", ex.what());
@@ -47,11 +43,11 @@ namespace communication {
         });
     }
 
-    void GCS::onControllerCommand(const uint8_t* buffer, size_t size)
+    void GCS::onControllerCommand(const std::vector<uint8_t>& buffer)
     {
         log("Controller Command");
         PBControllerCommand proto;
-        proto.ParseFromArray(buffer, size);
+        proto.ParseFromArray(buffer.data(), buffer.size());
         ControllerCommand controllerCommand = proto;
         log("time_stamp_ms:", controllerCommand.time_stamp_ms);
         log("motor1_thrust:", controllerCommand.motor1_thrust);

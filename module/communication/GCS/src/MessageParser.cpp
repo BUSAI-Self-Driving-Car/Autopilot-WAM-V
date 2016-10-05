@@ -24,35 +24,23 @@ void MessageParser::reset() {
     messageType = 0;
 }
 
-void MessageParser::registerMessageHandler(uint8_t type, std::function<void(const uint8_t*, size_t)> handler)
+void MessageParser::registerMessageHandler(uint8_t type, std::function<void(const std::vector<uint8_t> &)> handler)
 {
     messageHandlers[type] = handler;
 }
 
 void MessageParser::read()
 {
-
     ssize_t bytes_read=0;
+    uint8_t c;
+    bytes_read = uart.read(&c,1);
 
-//    if (parseState == PARSE_STATE::DATA && messageSize > readbuffer.size()) {
-//        uint32_t nBytes =  messageSize - readbuffer.size();
-//        bytes_read = uart.read(readbuffer.data() + readbuffer.size(), nBytes);
+    if (bytes_read > 1) {
+        throw std::logic_error("uart read more bytes than requested");
+    }
+    if (bytes_read <1 ) return;
 
-//        if (bytes_read < 1 ) return;
-
-//        readbuffer.resize(readbuffer.size() + bytes_read);
-//    }
-//    else {
-        uint8_t c;
-        bytes_read = uart.read(&c,1);
-
-        if (bytes_read > 1) {
-            throw std::logic_error("uart read more bytes than requested");
-        }
-        if (bytes_read <1 ) return;
-
-        readbuffer.push_back(c);
-//    }
+    readbuffer.push_back(c);
 
     auto len = readbuffer.size();
 
@@ -113,7 +101,7 @@ void MessageParser::read()
                 if (crc32.checksum() == checksum) {
 
                     if (messageHandlers.find(messageType) != messageHandlers.end()) {
-                        messageHandlers[messageType](messageData.data(), messageData.size());
+                        messageHandlers[messageType](messageData);
                     }
                 }               
 
