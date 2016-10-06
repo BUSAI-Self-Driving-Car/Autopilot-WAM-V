@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "Vector.proto";
+
+package message.communication;
+
+message GamePad {
+    fvec2 left_analog_stick = 1;
+    fvec2 right_analog_stick = 2;
+    bool left_analog_button = 3;
+    bool right_analog_button = 4;
+    bool A = 5;
+    bool B = 6;
+    bool X = 7;
+    bool Y = 8;
+    bool start = 9;
+    bool back = 10;
+    bool home = 11;
+    bool up = 12;
+    bool down = 13;
+    bool left = 14;
+    bool right = 15;
+    bool LB = 16;
+    bool RB = 17;
+    float LT = 18;
+    float RT = 19;
+}
