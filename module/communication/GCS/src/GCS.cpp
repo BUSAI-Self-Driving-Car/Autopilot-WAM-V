@@ -4,6 +4,8 @@
 #include "extension/P2P.h"
 #include "message/communication/GamePad.h"
 #include "message/propulsion/PropulsionSetpoint.h"
+#include "message/propulsion/PropulsionStart.h"
+#include "message/propulsion/PropulsionStop.h"
 #include <functional>
 
 
@@ -13,6 +15,8 @@ namespace communication {
     using extension::Configuration;
     using extension::P2P;
     using message::communication::GamePad;
+    using message::propulsion::PropulsionStart;
+    using message::propulsion::PropulsionStop;
 
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
@@ -22,6 +26,18 @@ namespace communication {
         });
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad){
+
+            if (gamePad.A) {
+                auto start = std::make_unique<PropulsionStart>();
+                emit(start);
+                log("Propulsion Start");
+            }
+
+            if (gamePad.B) {
+                auto stop = std::make_unique<PropulsionStop>();
+                emit(stop);
+                log("Propulsion Stop");
+            }
 
             auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
             setpoint->port.throttle = -gamePad.left_analog_stick.y();

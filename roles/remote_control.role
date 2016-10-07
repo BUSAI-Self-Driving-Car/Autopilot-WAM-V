@@ -4,4 +4,5 @@ NUCLEAR_ROLE(
     extension::FileWatcher
     extension::SerialP2P
     communication::GCS
+    actuator::Propulsion
 )
