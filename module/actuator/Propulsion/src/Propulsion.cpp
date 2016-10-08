@@ -52,8 +52,38 @@ namespace actuator {
             if (starboard.stepper) { starboard.stepper->read(); }
         });
 
+        on<Every<10, std::chrono::milliseconds>>().then([this] ()
+        {
+           if (port.torqeedo) { port.torqeedo->watchdog_call(10); }
+           if (starboard.torqeedo) { starboard.torqeedo->watchdog_call(10); }
+        });
+
+        on<IO>(STDIN_FILENO, IO::READ).then([this]()
+        {
+            char c;
+            std::cin >> c;
+
+            switch (c)
+            {
+                case 's':
+                {
+                    auto start = std::make_unique<message::propulsion::PropulsionStart>();
+                    emit(start);
+                }
+                break;
+                case ' ':
+                {
+                    auto stop = std::make_unique<message::propulsion::PropulsionStop>();
+                    emit(stop);
+                }
+                break;
+            }
+        });
+
         on<Trigger<message::propulsion::PropulsionStart> >().then([this] ()
         {
+            log("Propulsion Start");
+
             if (port.torqeedo) { port.torqeedo->start(); }
             if (port.stepper)
             {
@@ -71,12 +101,14 @@ namespace actuator {
 
         on<Trigger<message::propulsion::PropulsionStop> >().then([this] ()
         {
+            log("STOP");
             if (port.torqeedo) { port.torqeedo->stop(); }
             if (port.stepper) { port.stepper->motorStop(true); }
 
             if (starboard.torqeedo) { starboard.torqeedo->stop(); }
             if (starboard.stepper) { starboard.stepper->motorStop(true); }
 
+            // TODO: Make more elegant
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             if (port.stepper) { port.stepper->motorEnable(false); }
             if (starboard.stepper) { starboard.stepper->motorEnable(false); }
@@ -84,11 +116,24 @@ namespace actuator {
 
         on<Trigger<message::propulsion::PropulsionSetpoint> >().then([this] (const message::propulsion::PropulsionSetpoint& setpoint)
         {
+            return;
             if (port.torqeedo) { port.torqeedo->speed(setpoint.port.throttle); }
             if (port.stepper) { port.stepper->azimuth(setpoint.port.azimuth); }
 
             if (starboard.torqeedo) { starboard.torqeedo->speed(setpoint.starboard.throttle); }
             if (starboard.stepper) { starboard.stepper->azimuth(setpoint.starboard.azimuth); }
+        });
+
+        on<Every<50, std::chrono::milliseconds>>().then([this] ()
+        {
+            if (port.stepper) { port.stepper->run(); }
+            if (starboard.stepper) { starboard.stepper->run(); }
+        });
+
+        on<Every<2000, std::chrono::milliseconds>>().then([this] ()
+        {
+            if (port.stepper) { port.stepper->motorStatus(); }
+            if (starboard.stepper) { starboard.stepper->motorStatus(); }
         });
     }
 }
