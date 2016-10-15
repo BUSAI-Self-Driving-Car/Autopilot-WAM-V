@@ -19,7 +19,7 @@ namespace actuator {
             const auto port_thruster = config["thrusters"]["port"];
             port.torqeedo.reset(new TorqeedoHAL("port", port.torqeedo_uart));
             port.torqeedo_uart.open(port_thruster["torqeedo_device"].as<std::string>(), port_thruster["torqeedo_baud"].as<unsigned int>());
-            port.stepper.reset(new Stepper(port.stepper_uart));
+            port.stepper.reset(new Stepper(port.stepper_uart, port_thruster["thetaMax"].as<float>(), port_thruster["thetaMin"].as<float>()));
             port.stepper_uart.open(port_thruster["stepper_device"].as<std::string>(), port_thruster["stepper_baud"].as<unsigned int>());
             port.stepper->begin();
 
@@ -27,7 +27,7 @@ namespace actuator {
             const auto starboard_thruster = config["thrusters"]["starboard"];
             starboard.torqeedo.reset(new TorqeedoHAL("starboard", starboard.torqeedo_uart));
             starboard.torqeedo_uart.open(starboard_thruster["torqeedo_device"].as<std::string>(), starboard_thruster["torqeedo_baud"].as<unsigned int>());
-            starboard.stepper.reset(new Stepper(starboard.stepper_uart));
+            starboard.stepper.reset(new Stepper(starboard.stepper_uart, starboard_thruster["thetaMax"].as<float>(), starboard_thruster["thetaMin"].as<float>()));
             starboard.stepper_uart.open(starboard_thruster["stepper_device"].as<std::string>(), starboard_thruster["stepper_baud"].as<unsigned int>());
             starboard.stepper->begin();
         });
@@ -116,7 +116,6 @@ namespace actuator {
 
         on<Trigger<message::propulsion::PropulsionSetpoint> >().then([this] (const message::propulsion::PropulsionSetpoint& setpoint)
         {
-            return;
             if (port.torqeedo) { port.torqeedo->speed(setpoint.port.throttle); }
             if (port.stepper) { port.stepper->azimuth(setpoint.port.azimuth); }
 
@@ -124,13 +123,13 @@ namespace actuator {
             if (starboard.stepper) { starboard.stepper->azimuth(setpoint.starboard.azimuth); }
         });
 
-        on<Every<50, std::chrono::milliseconds>>().then([this] ()
+        on<Every<200, std::chrono::milliseconds>>().then([this] ()
         {
             if (port.stepper) { port.stepper->run(); }
             if (starboard.stepper) { starboard.stepper->run(); }
         });
 
-        on<Every<2000, std::chrono::milliseconds>>().then([this] ()
+        on<Every<500, std::chrono::milliseconds>>().then([this] ()
         {
             if (port.stepper) { port.stepper->motorStatus(); }
             if (starboard.stepper) { starboard.stepper->motorStatus(); }

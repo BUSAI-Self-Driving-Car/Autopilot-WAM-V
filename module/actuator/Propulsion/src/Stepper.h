@@ -6,7 +6,7 @@
 #include <regex>
 #include <vector>
 #include <mutex>
-#include <queue>
+#include <deque>
 #include <future>
 
 namespace module {
@@ -40,14 +40,14 @@ namespace actuator {
 
         int get_current_position();
         void process(std::string,std::string);
-        void command(std::string);
+        void command(std::string, bool critical);
         void statGrab(std::string);
         void error(std::string); // too be added at some point
         void write_command();
-        void move(int);
+        void write_command(std::string);
 
     public:
-        Stepper(utility::io::uart& rs485);
+        Stepper(utility::io::uart& rs485, float thetaMax, float thetaMin);
 
         void command_sent();
         void run();
@@ -67,7 +67,7 @@ namespace actuator {
 
         std::string buffer;
         std::mutex command_mtx;
-        std::queue<std::string> command_queue;
+        std::deque<std::pair<std::string, bool>> command_queue;
         bool writing, homed, motorMoving, posRequest;
         std::future<void> future;
 
@@ -75,11 +75,11 @@ namespace actuator {
         float conv = 1; // to be decided
 
         // max & min positions
-        const float thetaMax = M_PI/2; // +pi/2
-        const float thetaMin = -M_PI/2; // -pi/2
+        const float thetaMax;
+        const float thetaMin;
 
         // High & Low Speed for driver in PPS
-        uint HSPD = 50000;
+        uint HSPD = 40000;
         uint HSPD_HOME = 25000;
         uint LSPD = 10000;
 
@@ -90,7 +90,7 @@ namespace actuator {
         std::condition_variable stop_cond_var, pos_cond_var;
         std::mutex stop_mtx, pos_mtx;
         bool limit;
-        int pulsePos, pulseMax, pulseMin;
+        int pulsePos, pulseMax, pulseMin, targetPos;
 
         // Encoder Position
         int posEnc;
