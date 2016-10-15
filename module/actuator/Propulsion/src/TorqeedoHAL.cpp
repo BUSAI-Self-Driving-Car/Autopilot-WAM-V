@@ -8,7 +8,7 @@ TorqeedoHAL::TorqeedoHAL(std::string _name, utility::io::uart &_uart)
     : name(_name)
     , uart(_uart)
 {
-    torqeedo_init(&driver, _name.c_str(), this);
+    torqeedo_init(&driver, name.c_str(), this);
     driver.service_watchdog = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->service_watchdog(); };
     driver.delay_ms = delay_ms;
     driver.power_low = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->power_low(); };
@@ -54,7 +54,8 @@ void TorqeedoHAL::watchdog_call(uint ms)
     if (watchdog_timer > ms)
     {
         watchdog_timer = 0;
-        torqeedo_timeout(&driver);
+//std::cout << "Timeout" << std::endl;
+ //       torqeedo_timeout(&driver);
     }
     else
     {

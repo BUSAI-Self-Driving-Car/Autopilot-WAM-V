@@ -52,12 +52,6 @@ namespace actuator {
             if (starboard.stepper) { starboard.stepper->read(); }
         });
 
-        on<Every<10, std::chrono::milliseconds>>().then([this] ()
-        {
-           if (port.torqeedo) { port.torqeedo->watchdog_call(10); }
-           if (starboard.torqeedo) { starboard.torqeedo->watchdog_call(10); }
-        });
-
         on<IO>(STDIN_FILENO, IO::READ).then([this]()
         {
             char c;
@@ -77,6 +71,87 @@ namespace actuator {
                     emit(stop);
                 }
                 break;
+                case '0':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0;
+                    setpoint->starboard.throttle = 0;
+                    emit(setpoint);
+                }
+                break;
+                case '1':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.1;
+                    setpoint->starboard.throttle = 0.1;
+                    emit(setpoint);
+                }
+                break;
+                case '2':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.2;
+                    setpoint->starboard.throttle = 0.2;
+                    emit(setpoint);
+                }
+                break;
+                case '3':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.3;
+                    setpoint->starboard.throttle = 0.3;
+                    emit(setpoint);
+                }
+                break;
+                case '4':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.4;
+                    setpoint->starboard.throttle = 0.4;
+                    emit(setpoint);
+                }
+                break;
+                case '5':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.5;
+                    setpoint->starboard.throttle = 0.5;
+                    emit(setpoint);
+                }
+                break;
+                case '6':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.6;
+                    setpoint->starboard.throttle = 0.6;
+                    emit(setpoint);
+                }
+                break;
+                case '7':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.7;
+                    setpoint->starboard.throttle = 0.7;
+                    emit(setpoint);
+                }
+                break;
+                case '8':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.8;
+                    setpoint->starboard.throttle = 0.8;
+                    emit(setpoint);
+                }
+                break;
+                case '9':
+                {
+                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    setpoint->port.throttle = 0.9;
+                    setpoint->starboard.throttle = 0.9;
+                    emit(setpoint);
+                }
+                break;
+
             }
         });
 
@@ -84,14 +159,17 @@ namespace actuator {
         {
             log("Propulsion Start");
 
-            if (port.torqeedo) { port.torqeedo->start(); }
+            if (port.torqeedo) { port.torqeedo->speed(0); port.torqeedo->start(); }
             if (port.stepper)
             {
                 port.stepper->motorEnable(true);
                 if (!port.stepper->isHomed()) { port.stepper->motorHome(); }
             }
+        });
 
-            if (starboard.torqeedo) { starboard.torqeedo->start(); }
+        on<Trigger<message::propulsion::PropulsionStart> >().then([this] ()
+        {
+            if (starboard.torqeedo) { starboard.torqeedo->speed(0); starboard.torqeedo->start(); }
             if (starboard.stepper)
             {
                 starboard.stepper->motorEnable(true);

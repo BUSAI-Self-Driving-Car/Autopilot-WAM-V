@@ -15,11 +15,8 @@ namespace actuator {
         std::string name;
         utility::io::uart& uart;
         TORQEEDO_DRIVER_T driver;
-        std::mutex watchdog_mtx;
-        uint watchdog_timer;
 
         static void delay_ms(int x);
-        void service_watchdog();
         void power_low();
         void power_high();
         void bus_state_receive();
@@ -29,7 +26,6 @@ namespace actuator {
 
     public:
         TorqeedoHAL(std::string _name, utility::io::uart& _uart);
-        void watchdog_call(uint ms);
         void read();
         void start();
         void stop();
