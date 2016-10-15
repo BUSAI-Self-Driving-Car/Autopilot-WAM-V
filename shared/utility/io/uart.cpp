@@ -92,7 +92,10 @@ namespace io {
         termios tio;
         memset(&tio, 0, sizeof(tio));
         // B38400 for aliasing, CS8 (8bit,no parity,1 stopbit), CLOCAL (local connection, no modem control), CREAD (enable receiving characters)
-        tio.c_cflag      = B38400|CS8|CLOCAL|CREAD;
+        if (baud == 9600)
+            tio.c_cflag = B9600|CS8|CLOCAL|CREAD;
+        else
+            tio.c_cflag      = B38400|CS8|CLOCAL|CREAD;
         // IGNPAR (ignore incoming parity bits as we don't have parity)
         tio.c_iflag      = IGNPAR;
         // 0 means raw output
@@ -103,6 +106,7 @@ namespace io {
         tio.c_cc[VMIN]   = 0;
         // Set the settings
         tcsetattr(fd, TCSANOW, &tio);
+        if (baud == 9600) return;
 
         // Here we do the baud rate aliasing in order to set the custom baud rate
         serial_struct serinfo;
