@@ -1,6 +1,7 @@
 #ifndef MODULE_ACTUATOR_TORQEEDOHAL_H
 #define MODULE_ACTUATOR_TORQEEDOHAL_H
 
+#include <mutex>
 #include <utility/io/uart.h>
 #include "torqeedo.h"
 
@@ -10,9 +11,12 @@ namespace actuator {
     class TorqeedoHAL
     {
     private:
+        static constexpr uint WATCHDOG_PERIOD = 250;
         std::string name;
         utility::io::uart& uart;
         TORQEEDO_DRIVER_T driver;
+        std::mutex watchdog_mtx;
+        uint watchdog_timer;
 
         static void delay_ms(int x);
         void service_watchdog();
@@ -25,6 +29,7 @@ namespace actuator {
 
     public:
         TorqeedoHAL(std::string _name, utility::io::uart& _uart);
+        void watchdog_call(uint ms);
         void read();
         void start();
         void stop();

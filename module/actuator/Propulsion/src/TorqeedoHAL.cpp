@@ -16,7 +16,6 @@ TorqeedoHAL::TorqeedoHAL(std::string _name, utility::io::uart &_uart)
     driver.bus_state_receive = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->bus_state_receive(); };
     driver.bus_state_transmit = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->bus_state_transmit(); };
     driver.packet_transmit = [](void* args, uint8_t* buf, int n) { reinterpret_cast<TorqeedoHAL*>(args)->packet_transmit(buf, n); };
-//    driver.packet_received = [](void* args, TORQEEDO_PACKET_T* packet) { reinterpret_cast<TorqeedoHAL*>(args)->packet_received(packet); };
 }
 
 void TorqeedoHAL::start()
@@ -44,7 +43,23 @@ void TorqeedoHAL::read()
 
 void TorqeedoHAL::service_watchdog ()
 {
+    std::lock_guard<std::mutex> lg(watchdog_mtx);
+    watchdog_timer = WATCHDOG_PERIOD;
+}
 
+void TorqeedoHAL::watchdog_call(uint ms)
+{
+    std::lock_guard<std::mutex> lg(watchdog_mtx);
+
+    if (watchdog_timer > ms)
+    {
+        watchdog_timer = 0;
+        torqeedo_timeout(&driver);
+    }
+    else
+    {
+        watchdog_timer -= ms;
+    }
 }
 
 void TorqeedoHAL::delay_ms (int x)
@@ -74,12 +89,5 @@ void TorqeedoHAL::bus_state_transmit ()
 
 void TorqeedoHAL::packet_transmit (uint8_t *buf, int n)
 {
-//    std::cout << "TX" << std::endl;
     uart.blocking_write(buf, n);
-}
-
-void TorqeedoHAL::packet_received (TORQEEDO_PACKET_T* packet)
-{
-//    std::cout << "RX" << std::endl;
-//    torqeedo_print(&driver, packet);
 }
