@@ -62,6 +62,14 @@ namespace extension {
             return Configuration(path, config[index]);
         }
 
+        Configuration operator [] (int index) {
+            return Configuration(path, config[index]);
+        }
+
+        const Configuration operator [] (int index) const {
+            return Configuration(path, config[index]);
+        }
+
         template <typename T>
         T as() const {
             return config.as<T>();
