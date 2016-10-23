@@ -31,9 +31,21 @@ namespace actuator {
             TOC_TIME_OUT_STATUS = 1 << 10
         };
 
+        template <enum Side, enum Direction> struct Limit {};
+
+        template <enum Side>
+        struct StepperPulse
+        {
+            StepperPulse(int c)
+                : count(c)
+            {}
+            int count;
+        };
+
         template <enum Side S>
         struct Stepper
         {
+            using PulseType = StepperPulse<S>;
             static constexpr enum Side side = S;
             utility::io::uart uart;
             float theta_min, theta_max;
@@ -62,17 +74,6 @@ namespace actuator {
             {
                 target = conversion*azimuth;
             }
-        };
-
-        template <enum Side, enum Direction> struct Limit {};
-
-        template <enum Side>
-        struct StepperPulse
-        {
-            StepperPulse(int c)
-                : count(c)
-            {}
-            int count;
         };
 
         Stepper<PORT> port;
@@ -257,6 +258,62 @@ namespace actuator {
             {
                 stepper.moving = false;
             }
+        }
+
+        template <typename StepperType>
+        void start(StepperType& stepper)
+        {
+            // Configure the stepper driver
+            if (stepper.homing) return;
+            stepper.homing = true;
+            stepper.homed = false;
+            stepper.queue_command("ABS", true);
+            stepper.queue_command("ACC=" + std::to_string(stepper.acceleration), true);
+            stepper.queue_command("DRVIC="+std::to_string(stepper.current_limit), true);
+            stepper.queue_command("DRVMS=2", true);
+            stepper.queue_command("HSPD="+std::to_string(stepper.high_speed), true);
+            stepper.queue_command("LSPD="+std::to_string(stepper.low_speed), true);
+            stepper.queue_command("RW", true);
+            stepper.queue_command("EO=1",true);
+
+            // Go to negative limit
+            stepper.queue_command("L-", true);
+
+            stepper.negative_home.enable();
+        }
+
+        template <typename StepperType>
+        void on_watchdog(StepperType& stepper)
+        {
+            log<NUClear::WARN>("Stepper transmit timeout on side:", stepper.side);
+            stepper.writing_command = false;
+            write_command(stepper);
+        }
+
+        template <typename StepperType>
+        void negative_limit(StepperType& stepper)
+        {
+            log<NUClear::INFO>("Negative limit reached on side:", stepper.side);
+            stepper.queue_command("J+", true);
+
+            stepper.negative_home.disable();
+            stepper.positive_home.enable();
+        }
+
+        template <typename StepperType>
+        void positive_limit(StepperType& stepper, const typename StepperType::PulseType& pulse)
+        {
+            log<NUClear::INFO>("Positive limit reached on side:", stepper.side);
+            stepper.pulse_min = -pulse.count/2;
+            stepper.pulse_max = pulse.count/2;
+            stepper.conversion = pulse.count / (stepper.theta_max - stepper.theta_min);
+
+            stepper.target = 0;
+            stepper.queue_command("PX=" + std::to_string(int(pulse.count/2)), true);
+
+            stepper.positive_home.disable();
+            stepper.homed = true;
+            stepper.homing = false;
         }
 
     public:

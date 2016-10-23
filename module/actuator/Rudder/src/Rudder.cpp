@@ -43,61 +43,24 @@ Rudder::Rudder(std::unique_ptr<NUClear::Environment> environment)
         starboard.uart_handle = on<IO,Priority::HIGH>(starboard.uart.native_handle(), IO::READ).then("starboard stepper read",  [this] { read_uart(starboard); });
     });
 
-    on<Trigger<message::propulsion::PropulsionStart>>().then([this]
-    {
-        // Configure the stepper driver
-        if (port.homing) return;
-        port.homing = true;
-        port.homed = false;
-        port.queue_command("ABS", true);
-        port.queue_command("ACC=" + std::to_string(port.acceleration), true);
-        port.queue_command("DRVIC="+std::to_string(port.current_limit), true);
-        port.queue_command("DRVMS=2", true);
-        port.queue_command("HSPD="+std::to_string(port.high_speed), true);
-        port.queue_command("LSPD="+std::to_string(port.low_speed), true);
-        port.queue_command("RW", true);
-        port.queue_command("EO=1",true);
-
-        // Go to negative limit
-        port.queue_command("L-", true);
-
-        port.negative_home.enable();
-    });
-
     on<Trigger<message::propulsion::PropulsionSetpoint>>().then([this] (const message::propulsion::PropulsionSetpoint& setpoint)
     {
         port.move(setpoint.port.azimuth);
+        starboard.move(setpoint.starboard.azimuth);
     });
 
-    on<Watchdog<Stepper<PORT>, 200, std::chrono::milliseconds>>().then([this]
-    {
-        log<NUClear::WARN>("Stepper", int(port.side), "transmit timeout");
-        port.writing_command = false;
-        write_command<Stepper<PORT>>(port);
-    });
+    on<Trigger<message::propulsion::PropulsionStart>>().then([this] { start(port); });
+    on<Trigger<message::propulsion::PropulsionStart>>().then([this] { start(starboard); });
 
-    port.negative_home = on<Trigger<Limit<PORT, NEGATIVE>>>().then([this]
-    {
-        log<NUClear::INFO>("Port negative limit reached");
-        port.queue_command("J+", true);
+    on<Watchdog<Stepper<PORT>, 200, std::chrono::milliseconds>>().then([this] { on_watchdog(port); });
+    on<Watchdog<Stepper<STARBOARD>, 200, std::chrono::milliseconds>>().then([this] { on_watchdog(starboard); });
 
-        port.negative_home.disable();
-        port.positive_home.enable();
-    }).disable();
+    port.negative_home = on<Trigger<Limit<PORT, NEGATIVE>>>().then([this] { negative_limit(port); }).disable();
+    starboard.negative_home = on<Trigger<Limit<STARBOARD, NEGATIVE>>>().then([this] { negative_limit(starboard); }).disable();
 
     port.positive_home = on<Trigger<Limit<PORT, POSITIVE>>, With<StepperPulse<PORT>>>().then([this] (const StepperPulse<PORT>& pulse)
-    {
-        log<NUClear::INFO>("Port positive limit reached");
-        port.pulse_min = -pulse.count/2;
-        port.pulse_max = pulse.count/2;
-        port.conversion = pulse.count / (port.theta_max - port.theta_min);
-
-        port.target = 0;
-        port.queue_command("PX=" + std::to_string(int(pulse.count/2)), true);
-
-        port.positive_home.disable();
-        port.homed = true;
-        port.homing = false;
-    }).disable();
+    { positive_limit(port, pulse); }).disable();
+    starboard.positive_home = on<Trigger<Limit<STARBOARD, POSITIVE>>, With<StepperPulse<STARBOARD>>>().then([this] (const StepperPulse<STARBOARD>& pulse)
+    { positive_limit(starboard, pulse); }).disable();
 }
 
