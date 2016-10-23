@@ -39,7 +39,7 @@ Rudder::Rudder(std::unique_ptr<NUClear::Environment> environment)
         port.uart_handle.unbind();
         port.uart_handle = on<IO,Priority::HIGH>(port.uart.native_handle(), IO::READ).then("port stepper read", [this] { read_uart(port); });
 
-        port.uart_handle.unbind();
+        starboard.uart_handle.unbind();
         starboard.uart_handle = on<IO,Priority::HIGH>(starboard.uart.native_handle(), IO::READ).then("starboard stepper read",  [this] { read_uart(starboard); });
     });
 

@@ -45,6 +45,8 @@ namespace actuator {
         template <enum Side S>
         struct Stepper
         {
+            template <enum Direction D>
+            using LimitType = Limit<S, D>;
             using PulseType = StepperPulse<S>;
             static constexpr enum Side side = S;
             utility::io::uart uart;
@@ -241,11 +243,11 @@ namespace actuator {
         {
             if (code & MINUS_LIMIT_SWITCH)
             {
-                emit(std::make_unique<Limit<PORT,NEGATIVE>>()); 
+                emit(std::make_unique<typename StepperType::template LimitType<NEGATIVE>>()); 
             }
             if (code & PLUS_LIMIT_SWITCH)
             {
-                emit(std::make_unique<Limit<PORT,POSITIVE>>());
+                emit(std::make_unique<typename StepperType::template LimitType<POSITIVE>>());
             }
 
             if ((code & CONSTANT_SPEED) ||
@@ -285,7 +287,6 @@ namespace actuator {
         template <typename StepperType>
         void on_watchdog(StepperType& stepper)
         {
-            log<NUClear::WARN>("Stepper transmit timeout on side:", stepper.side);
             stepper.writing_command = false;
             write_command(stepper);
         }
@@ -293,7 +294,7 @@ namespace actuator {
         template <typename StepperType>
         void negative_limit(StepperType& stepper)
         {
-            log<NUClear::INFO>("Negative limit reached on side:", stepper.side);
+            log<NUClear::INFO>("Negative limit reached on side:", int(stepper.side));
             stepper.queue_command("J+", true);
 
             stepper.negative_home.disable();
