@@ -40,18 +40,27 @@ namespace actuator {
             ReactionHandle uart_handle, positive_home, negative_home;
             std::mutex command_mutex;
             std::deque<std::pair<std::string, bool>> command_queue;
+            bool writing_command, homed, homing;
             uint8_t acceleration;
             uint16_t current_limit;
             uint32_t high_speed, low_speed;
             int pulse_min, pulse_max, target;
             float conversion;
+            bool moving;
 
             std::string buffer;
 
-            void queue_command(std::string command, bool critical = false)
+            Stepper() : writing_command(false), homed(false), target(0), moving(false), homing(false) {}
+
+            void queue_command(const std::string& command, bool critical = false)
             {
                 std::lock_guard<std::mutex> lg(command_mutex);
                 command_queue.push_back(std::make_pair(command, critical));
+            }
+
+            void move(float azimuth)
+            {
+                target = conversion*azimuth;
             }
         };
 
@@ -95,9 +104,11 @@ namespace actuator {
         void write_command(StepperType& stepper)
         {
             std::lock_guard<std::mutex> lg(stepper.command_mutex);
+            if (stepper.writing_command) return;
+            if (stepper.command_queue.empty()) return;
             std::string command("@01"+stepper.command_queue.front().first+"\r");
-            log<NUClear::DEBUG>(int(stepper.side), "TX:", command);
             stepper.uart.write(command.c_str(), command.length());
+            stepper.writing_command = true;
 
             emit(std::make_unique<NUClear::message::ServiceWatchdog<StepperType>>());
         }
@@ -120,7 +131,10 @@ namespace actuator {
                     std::lock_guard<std::mutex> lg(stepper.command_mutex);
                     if (!stepper.command_queue.empty())
                     {
-                        if (stepper.command_queue.front().second == false) { stepper.command_queue.pop_front(); }
+                        if (stepper.command_queue.front().second == false) 
+                        { 
+                            stepper.command_queue.pop_front(); 
+                        }
                     }
                 }
             }
@@ -153,7 +167,10 @@ namespace actuator {
                 if (valid)
                 {
                     std::lock_guard<std::mutex> lg(stepper.command_mutex);
-                    if (!stepper.command_queue.empty()) stepper.command_queue.pop_front();
+                    if (!stepper.command_queue.empty()) 
+                    {
+                        stepper.command_queue.pop_front();
+                    }
                 }
                 else
                 {
@@ -161,29 +178,84 @@ namespace actuator {
                 }
             }
 
+            bool empty = false;
             {
                 std::lock_guard<std::mutex> lg(stepper.command_mutex);
-                if (stepper.command_queue.empty())
-                {
-                    stepper.queue_command("MST");
-                    stepper.queue_command("PX");
-                }
+                empty = stepper.command_queue.empty();
+                stepper.writing_command = false;
             }
+            
+            if (empty)
+            {
+                if (stepper.homed) 
+                {
+                    stepper.queue_command((stepper.moving ? "T" : "X") + std::to_string(stepper.target), true); 
+                }
+                stepper.queue_command("MST");
+                stepper.queue_command("PX");
+            }
+
             write_command(stepper);
         }
 
         template <typename StepperType>
-        void process_error(StepperType& config, const std::string& code)
+        void process_error(StepperType& stepper, const std::string& code)
         {
+            log<NUClear::DEBUG>("Error:", code);
 
-        }
+            if (code == "State Error")
+            {
+                std::lock_guard<std::mutex> lg(stepper.command_mutex);
+                stepper.command_queue.push_front(std::make_pair("CLR", true));
+            }
+            else if (code == "Moving")
+            {
+                std::lock_guard<std::mutex> lg(stepper.command_mutex);
+                if (stepper.command_queue.empty()) return;
+
+                std::string& lc = stepper.command_queue.front().first;
+                std::smatch match;
+                if (std::regex_search(lc.cbegin(), lc.cend(), match, std::regex(R"(X(-\d+|\d+))")))
+                {
+                    lc = "T" + std::to_string(stepper.target);
+                }
+                std::cout << lc << std::endl;
+            }
+            else if (std::regex_search(code, std::regex("ABS/INC")))
+            {
+                std::lock_guard<std::mutex> lg(stepper.command_mutex);
+                if (stepper.command_queue.empty()) return;
+
+                std::string& lc = stepper.command_queue.front().first;
+                std::smatch match;
+                if (std::regex_search(lc.cbegin(), lc.cend(), match, std::regex(R"(T(-\d+|\d+))")))
+                {
+                    lc = "X" + std::to_string(stepper.target);
+                }
+            }
+       }
 
         template <typename StepperType>
-        void process_status(StepperType& config, const int& code)
+        void process_status(StepperType& stepper, const int& code)
         {
             if (code & MINUS_LIMIT_SWITCH)
             {
+                emit(std::make_unique<Limit<PORT,NEGATIVE>>()); 
+            }
+            if (code & PLUS_LIMIT_SWITCH)
+            {
+                emit(std::make_unique<Limit<PORT,POSITIVE>>());
+            }
 
+            if ((code & CONSTANT_SPEED) ||
+                (code & ACCELERATING) ||
+                (code & DECELERATING))
+            {
+                stepper.moving = true;
+            }
+            else
+            {
+                stepper.moving = false;
             }
         }
 
