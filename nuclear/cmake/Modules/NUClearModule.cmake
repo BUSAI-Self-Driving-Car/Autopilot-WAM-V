@@ -18,7 +18,13 @@ FUNCTION(NUCLEAR_MODULE)
     CMAKE_PARSE_ARGUMENTS(MODULE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     # Find all our source files
-    FILE(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/**.h")
+    FILE(GLOB_RECURSE src
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.ipp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/**.h")
 
     # Get our data files
     FILE(GLOB_RECURSE data_files "${CMAKE_CURRENT_SOURCE_DIR}/data/**")

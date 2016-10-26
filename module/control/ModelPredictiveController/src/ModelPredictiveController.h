@@ -2,6 +2,7 @@
 #define MODULE_CONTROL_MODELPREDICTIVECONTROLLER_H
 
 #include <nuclear>
+#include "MPCController.h"
 
 namespace module {
 namespace control {
@@ -11,8 +12,11 @@ namespace control {
     public:
         /// @brief Called by the powerplant to build and setup the ModelPredictiveController reactor.
         explicit ModelPredictiveController(std::unique_ptr<NUClear::Environment> environment);
-    };
 
+    private:
+        MPCController controller;
+
+    };
 }
 }
 
