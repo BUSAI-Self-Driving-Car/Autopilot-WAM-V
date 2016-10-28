@@ -4,7 +4,6 @@
 #include <nuclear>
 #include <utility/io/uart.h>
 #include "TorqeedoHAL.h"
-#include "Stepper.h"
 
 namespace module {
 namespace actuator {
@@ -13,9 +12,8 @@ namespace actuator {
 
         struct Thruster
         {
-            utility::io::uart torqeedo_uart, stepper_uart;
+            utility::io::uart torqeedo_uart;
             std::unique_ptr<TorqeedoHAL> torqeedo;
-            std::unique_ptr<Stepper> stepper;
         };
 
         Thruster port, starboard;

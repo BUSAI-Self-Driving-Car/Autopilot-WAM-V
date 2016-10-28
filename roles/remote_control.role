@@ -5,4 +5,5 @@ NUCLEAR_ROLE(
     extension::SerialP2P
     communication::GCS
     actuator::Propulsion
+    actuator::Rudder
 )
