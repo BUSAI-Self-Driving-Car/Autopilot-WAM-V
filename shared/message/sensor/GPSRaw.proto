@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package message.sensor;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+
+message GPSRaw {
+
+    enum FixType {
+        NO_FIX = 0;
+        GPS_FIX = 1;
+        DGPS_FIX = 2;
+        PPS_FIX = 3;
+        REAL_TIME_KINEMATIC = 4;
+        REAL_TIME_KINEMATIC_FLOATING = 5;
+        DEAD_RECKONING = 6;
+    }
+
+    message Satellite {
+        uint32 PRN = 1;
+        double elevation = 2;
+        double azimuth = 3;
+        uint32 SNR = 4;
+    }
+
+    google.protobuf.Timestamp timestamp = 1;
+    vec2 velocity = 2;
+    vec3 lla = 3;
+    FixType fix_type = 4;
+    double pdop = 5;
+    double hdop = 6;
+    double vdop = 7;
+    repeated Satellite satellites = 8;
+}
