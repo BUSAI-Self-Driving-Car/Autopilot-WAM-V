@@ -2,7 +2,7 @@
 #define MODULE_SUPPORT_LOGGING_DATALOGGING_H
 
 #include <nuclear>
-#include <ofstream>
+#include <fstream>
 
 namespace module {
 namespace support {
@@ -18,7 +18,7 @@ namespace logging {
             NUClear::clock::time_point timestamp;
             std::array<uint64_t, 2> hash;
             std::vector<char> data;
-        }
+        };
 
         template <typename T>
         std::unique_ptr<DataLog> log_encode(const T& data) {
