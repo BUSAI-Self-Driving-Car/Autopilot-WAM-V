@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from textutil import indent, dedent
 from Enum import Enum
 from Message import Message
