@@ -3,6 +3,7 @@
 
 #include "extension/Configuration.h"
 #include "message/communication/GamePad.h"
+#include "message/propulsion/TorqeedoStatus.h"
 #include "message/sensor/GPSRaw.h"
 
 namespace module {
@@ -12,6 +13,7 @@ namespace logging {
     using extension::Configuration;
     using message::communication::GamePad;
     using message::sensor::GPSRaw;
+    using message::propulsion::TorqeedoStatus;
 
     DataLogging::DataLogging(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -85,6 +87,11 @@ namespace logging {
 
         on<Trigger<GPSRaw>>().then([this] (const GPSRaw& d) {
             emit(log_encode(d));
+        });
+
+        on<Trigger<TorqeedoStatus>>().then([this] (const TorqeedoStatus& d)
+        {
+           emit(log_encode(d));
         });
     }
 }
