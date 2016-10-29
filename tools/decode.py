@@ -47,7 +47,7 @@ def run(file, **kwargs):
         pb_type = '.'.join(pb_type).encode('utf-8')
         pb_hash = mmh3.hash_bytes(pb_type, 0x4e55436c, True)
 
-        parsers[pb_hash] = message
+        parsers[pb_hash] = (pb_type, message)
 
     # Now open the passed file
     with open(file, 'rb') as f:
@@ -68,8 +68,10 @@ def run(file, **kwargs):
 
             # If we know how to parse this type, parse it
             if type_hash in parsers:
-                msg = parsers[type_hash].FromString(payload[24:])
+                msg = parsers[type_hash][1].FromString(payload[24:])
 
+                out = re.sub(r'\s+', ' ', MessageToJson(msg, True))
+                out = '{{ "type": "{}", "timestamp": {}, "data": {} }}'.format(parsers[type_hash][0].decode('utf-8'), timestamp, out)
                 # Print as a json object
-                print(timestamp, re.sub(r'\s+', ' ', MessageToJson(msg, True)))
+                print(out)
 
