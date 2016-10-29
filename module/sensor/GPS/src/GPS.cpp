@@ -62,6 +62,7 @@ void GPS::process()
         // Essential fix data
         state.lla[0] = std::numeric_limits<double>::quiet_NaN();
         state.lla[1] = std::numeric_limits<double>::quiet_NaN();
+        state.lla[2] = std::numeric_limits<double>::quiet_NaN();
         state.fix_type = message::sensor::GPSRaw::FixType::NO_FIX;
 
         try
@@ -121,6 +122,7 @@ void GPS::process()
     else if (tokens[0] == "$GPGLL")
     {
         // Geographic lattitude and and longitude
+        state.timestamp = NUClear::clock::now();
         emit(std::make_unique<message::sensor::GPSRaw>(state));
     }
 
