@@ -73,7 +73,7 @@ void GPS::process()
             if (tokens[5] == "W") { state.lla[1] *= -1; }
             state.fix_type = std::stoi(tokens[6]);
             state.hdop = std::stod(tokens[8]);
-            state.lla[2] = std::stod(tokens[9]) + std::stod(tokens[10]);
+            state.lla[2] = std::stod(tokens[9]) + std::stod(tokens[11]);
         }
         catch (std::invalid_argument&) {}
     }
@@ -102,7 +102,7 @@ void GPS::process()
         try
         {
             sentences = std::stoi(tokens[1]);
-            seq = std::stoi(tokens[2]);
+            seq = std::stoi(tokens[2])-1;
             satellites = std::stoi(tokens[3]);
             state.satellites.resize(satellites);
             int start = seq*4;
