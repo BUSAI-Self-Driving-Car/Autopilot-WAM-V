@@ -6,6 +6,10 @@ namespace utility {
 
         template <typename Sub>
         struct I2CDevice {
+            enum Endian {
+                BE,
+                LE
+            };
 
         protected:
             I2CDevice(std::string device_path, uint8_t device_address) {
@@ -23,7 +27,7 @@ namespace utility {
             }
 
 
-            template <uint8_t addr, typename T, bool Endian>
+            template <uint8_t addr, typename T, enum Endian E>
             struct I2CVar {
             public:
                 I2CVar(I2CDevice& device)
