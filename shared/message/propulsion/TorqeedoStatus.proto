@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message TorqeedoStatus
+{
+    google.protobuf.Timestamp timestamp = 1;
+    string name = 2;
+    bool isValid = 3;
+    float motor_voltage = 4;
+    float motor_current = 5;
+    float motor_power = 6;
+    float motor_speed = 7;
+    float battery_voltage = 8;
+    float battery_current = 9;
+    float gps_speed = 10;
+}
+

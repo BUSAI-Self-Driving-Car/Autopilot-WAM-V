@@ -62,6 +62,7 @@ void GPS::process()
         // Essential fix data
         state.lla[0] = std::numeric_limits<double>::quiet_NaN();
         state.lla[1] = std::numeric_limits<double>::quiet_NaN();
+        state.lla[2] = std::numeric_limits<double>::quiet_NaN();
         state.fix_type = message::sensor::GPSRaw::FixType::NO_FIX;
 
         try
@@ -72,7 +73,7 @@ void GPS::process()
             if (tokens[5] == "W") { state.lla[1] *= -1; }
             state.fix_type = std::stoi(tokens[6]);
             state.hdop = std::stod(tokens[8]);
-            state.lla[2] = std::stod(tokens[9]) + std::stod(tokens[10]);
+            state.lla[2] = std::stod(tokens[9]) + std::stod(tokens[11]);
         }
         catch (std::invalid_argument&) {}
     }
@@ -101,7 +102,7 @@ void GPS::process()
         try
         {
             sentences = std::stoi(tokens[1]);
-            seq = std::stoi(tokens[2]);
+            seq = std::stoi(tokens[2])-1;
             satellites = std::stoi(tokens[3]);
             state.satellites.resize(satellites);
             int start = seq*4;
@@ -121,6 +122,7 @@ void GPS::process()
     else if (tokens[0] == "$GPGLL")
     {
         // Geographic lattitude and and longitude
+        state.timestamp = NUClear::clock::now();
         emit(std::make_unique<message::sensor::GPSRaw>(state));
     }
 
