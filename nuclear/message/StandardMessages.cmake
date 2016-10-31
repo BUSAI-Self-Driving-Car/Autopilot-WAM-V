@@ -1,10 +1,10 @@
 # Get the relative path to our message directory
 GET_FILENAME_COMPONENT(message_include_dir "${NUCLEAR_MESSAGE_DIR}/.." ABSOLUTE)
-FILE(RELATIVE_PATH message_include_dir ${CMAKE_SOURCE_DIR} ${message_include_dir})
+FILE(RELATIVE_PATH message_include_dir ${PROJECT_SOURCE_DIR} ${message_include_dir})
 
 # Get our two include directories for message
-SET(message_source_include_dir "${CMAKE_SOURCE_DIR}/${message_include_dir}")
-SET(message_binary_include_dir "${CMAKE_BINARY_DIR}/${message_include_dir}")
+SET(message_source_include_dir "${PROJECT_SOURCE_DIR}/${message_include_dir}")
+SET(message_binary_include_dir "${PROJECT_BINARY_DIR}/${message_include_dir}")
 
 # Make our message include directories variable
 SET(NUCLEAR_MESSAGE_INCLUDE_DIRS
@@ -14,11 +14,11 @@ SET(NUCLEAR_MESSAGE_INCLUDE_DIRS
 INCLUDE_DIRECTORIES(${NUCLEAR_MESSAGE_INCLUDE_DIRS})
 
 # Get the relative path to our message directory
-FILE(RELATIVE_PATH message_dir ${CMAKE_SOURCE_DIR} ${NUCLEAR_MESSAGE_DIR})
+FILE(RELATIVE_PATH message_dir ${PROJECT_SOURCE_DIR} ${NUCLEAR_MESSAGE_DIR})
 
 # Get our source and binary directories for message
-SET(message_source_dir "${CMAKE_SOURCE_DIR}/${message_dir}")
-SET(message_binary_dir "${CMAKE_BINARY_DIR}/${message_dir}")
+SET(message_source_dir "${PROJECT_SOURCE_DIR}/${message_dir}")
+SET(message_binary_dir "${PROJECT_BINARY_DIR}/${message_dir}")
 
 # Use a recursive glob to get all c++ files in the messages folder
 FILE(GLOB_RECURSE src
@@ -63,7 +63,7 @@ IF(protobufs)
             OUTPUT "${outputpath}/${file_we}.pb.cc"
                    "${outputpath}/${file_we}.pb.h"
             COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-            ARGS --cpp_out ${CMAKE_BINARY_DIR}/shared -I ${CMAKE_SOURCE_DIR}/shared ${abs_file}
+            ARGS --cpp_out ${PROJECT_BINARY_DIR}/shared -I ${PROJECT_SOURCE_DIR}/shared ${abs_file}
             DEPENDS ${abs_file}
             COMMENT "Running C++ protocol buffer compiler on ${proto}"
             VERBATIM)

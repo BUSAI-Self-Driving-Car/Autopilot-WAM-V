@@ -36,7 +36,7 @@ with open(role_name, 'w') as file:
         header = re.sub(r'::', r'/', module)
         # replace last name with src/name.h
         header = re.sub(r'([^\/]+)$', r'\1/src/\1.h', header)
-        file.write('#include "{}/{}"\n'.format(module_path, header))
+        file.write('#include "{}"\n'.format(header))
 
     # Add our main function and include headers
     main = textwrap.dedent("""
