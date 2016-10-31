@@ -1,12 +1,13 @@
-from textutil import indent, dedent
-from Field import Field
-from Enum import Enum
+from generator.textutil import indent, dedent
+from generator.Field import Field
+from generator.Enum import Enum
 
 
 class Message:
     def __init__(self, m, context):
         self.name = m.name
         self.fqn = '{}.{}'.format(context.fqn, self.name)
+        self.include_path = context.include_path
         self.enums = [Enum(e, self) for e in m.enum_type]
 
         # Get all the submessages that are not map entries
@@ -64,7 +65,7 @@ class Message:
 
             for v in self.fields:
                 if v.pointer:
-                    print 'TODO HANDLE POINTER CASES'
+                    print('TODO HANDLE POINTER CASES')
 
                 elif v.map_type:
                     if v.type[1].bytes_type:
@@ -140,7 +141,7 @@ class Message:
             for v in self.fields:
 
                 if v.pointer:
-                    print 'TODO HANDLE POINTER CASES'
+                    print('TODO HANDLE POINTER CASES')
 
                 elif v.map_type:
                     # Add the top of our for loop for the repeated field
@@ -197,11 +198,13 @@ class Message:
         enums = [e.generate_cpp() for e in self.enums]
         enum_headers = indent('\n\n'.join([e[0] for e in enums]))
         enum_impls = ('\n\n'.join([e[1] for e in enums]))
+        enum_python = ('\n\n'.join([e[2] for e in enums]))
 
         # Generate our submessage c++
         submessages = [s.generate_cpp() for s in self.submessages]
         submessage_headers = indent('\n\n'.join([s[0] for s in submessages]))
         submessage_impls = ('\n\n'.join([s[1] for s in submessages]))
+        submessage_python = ('\n\n'.join([s[2] for s in submessages]))
 
         # Get our function code
         default_constructor = self.generate_default_constructor()
@@ -214,7 +217,7 @@ class Message:
         converter_impl = '\n\n'.join([protobuf_converter[1]])
 
         header_template = dedent("""\
-            struct alignas(16) {name} : public ::message::MessageBase {{
+            struct alignas(16) {name} : public ::message::MessageBase<{name}> {{
                 // Protobuf type
                 using protobuf_type = {protobuf_type};
 
@@ -243,12 +246,36 @@ class Message:
             // Submessages
             {submessages}""")
 
-        # TODO
-        # {name}(const YAML::Node& node) {{ CONVERT }}
-        # {name}(const PyObject* pyobj) {{ CONVERT }}
+        python_template = dedent("""\
+            // Local scope for this message
+            {{
+                // Use our context and assign a new one to a shadow
+                auto shadow = pybind11::class_<{fqn}, std::shared_ptr<{fqn}>>(context, "{name}");
 
-        # operator YAML::Node() {{ CONVERT TO YAML NODE }}
-        # operator PyObject*() {{ WRAP IN A PYOBJECT }}
+                // Shadow our context with our new context and declare our subclasses
+                auto& context = shadow;
+            {submessages}
+            {enums}
+
+                // Declare the functions on our class (which may use the ones in the subclasses)
+                context
+            {constructor}
+            {message_members};
+                context.def_static("include_path", [] {{
+                    return "{include_path}";
+                }});
+            }}""")
+
+        python_members = '\n'.join('.def_readwrite("{field}", &{fqn}::{field})'.format(field=f.name, fqn=self.fqn.replace('.', '::')) for f in self.fields)
+        python_constructor = dedent("""\
+            .def("__init__", [] ({name}& self, {args}) {{
+                new (&self) {name}({vars});
+            }}, {default_args})""").format(
+            name=self.fqn.replace('.', '::'),
+            args=', '.join('{} const& {}'.format(t.cpp_type, t.name) for t in self.fields),
+            vars=', '.join(t.name for t in self.fields),
+            default_args=', '.join('pybind11::arg("{}") = {}'.format(t.name, t.default_value if t.default_value else '{}()'.format(t.cpp_type)) for t in self.fields)
+        )
 
         return header_template.format(
             name=self.name,
@@ -263,4 +290,12 @@ class Message:
             converters=converter_impl,
             enums=enum_impls,
             submessages=submessage_impls
+        ), python_template.format(
+            constructor=indent(python_constructor, 8),
+            message_members=indent(python_members, 8),
+            include_path=self.include_path,
+            fqn=self.fqn.replace('.', '::'),
+            name=self.name,
+            submessages=indent(submessage_python),
+            enums=indent(enum_python)
         )

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import os
 import argparse
@@ -46,10 +46,10 @@ for l in cmake_cache_text:
 if __name__ == "__main__":
 
     # Print some information for the user
-    print "b script for", cmake_cache["CMAKE_PROJECT_NAME"]
-    print "\tSource:", cmake_cache[cmake_cache["CMAKE_PROJECT_NAME"] + '_SOURCE_DIR']
-    print "\tBinary:", cmake_cache[cmake_cache["CMAKE_PROJECT_NAME"] + '_BINARY_DIR']
-    print
+    print("b script for", cmake_cache["CMAKE_PROJECT_NAME"])
+    print("\tSource:", cmake_cache[cmake_cache["CMAKE_PROJECT_NAME"] + '_SOURCE_DIR'])
+    print("\tBinary:", cmake_cache[cmake_cache["CMAKE_PROJECT_NAME"] + '_BINARY_DIR'])
+    print()
 
     # Add our builtin tools to the path and user tools
     sys.path.append(nuclear_tools_path)

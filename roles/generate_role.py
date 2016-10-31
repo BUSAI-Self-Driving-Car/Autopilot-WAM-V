@@ -35,7 +35,7 @@ with open(role_name, 'w') as file:
         header = re.sub(r'::', r'/', module)
         # replace last name with src/name.h
         header = re.sub(r'([^\/]+)$', r'\1/src/\1.h', header)
-        file.write('#include "{}/{}"\n'.format(module_path, header))
+        file.write('#include "{}"\n'.format(header))
 
     # Add our main function and include headers
     main = textwrap.dedent("""
@@ -101,7 +101,7 @@ with open(role_name, 'w') as file:
                 elif section[0] in 'W':   # white
                     file.write(' << Colour::brightgray')
                 else:
-                    print "The banner file contains an invalid character", section
+                    print("The banner file contains an invalid character", section)
                     exit(1)
 
                 # Write the actual banner text

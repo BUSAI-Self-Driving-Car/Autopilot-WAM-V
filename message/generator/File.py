@@ -1,14 +1,17 @@
-from textutil import indent, dedent
-from Enum import Enum
-from Message import Message
+from generator.textutil import indent, dedent
+from generator.Enum import Enum
+from generator.Message import Message
+import re
 
 
 class File:
-    def __init__(self, f):
+    def __init__(self, f, base_file):
 
         # Store relevant information from our class in our object
         self.package = f.package
         self.name = f.name
+        self.base_file = base_file
+        self.include_path = "{}.h".format(base_file)
         self.fqn = '.{}'.format(self.package)
         self.dependencies = [d for d in f.dependency]
         self.enums = [Enum(e, self) for e in f.enum_type]
@@ -25,11 +28,13 @@ class File:
         enums = [e.generate_cpp() for e in self.enums]
         enum_headers = indent('\n\n'.join([e[0] for e in enums]))
         enum_impls = ('\n\n'.join([e[1] for e in enums]))
+        enum_python = ('\n\n'.join([e[2] for e in enums]))
 
         # Generate our enums c++
         messages = [m.generate_cpp() for m in self.messages]
         message_headers = indent('\n\n'.join([m[0] for m in messages]))
         message_impls = ('\n\n'.join([m[1] for m in messages]))
+        message_python = ('\n\n'.join([m[2] for m in messages]))
 
         # By default include some useful headers
         includes = {
@@ -88,7 +93,30 @@ class File:
 
             // Message Implementations
             {messages}
-        """)
+            """)
+
+        python_template = dedent("""\
+            #include <pybind11/pybind11.h>
+            #include <pybind11/complex.h>
+            #include <pybind11/stl.h>
+            #include <pybind11/chrono.h>
+            #include <pybind11/operators.h>
+            #include <pybind11/eigen.h>
+
+            {include}
+
+            void init_{filename}(pybind11::module& module) {{
+
+                // Go down to our submodule as required as context
+                pybind11::module context = module{submodules};
+
+            {messages}
+
+            {enums}
+            }}
+            """)
+
+        python_submodules = ''.join('.def_submodule("{}")'.format(m) for m in self.fqn.split('.')[2:])
 
         return header_template.format(
             define=define,
@@ -101,4 +129,10 @@ class File:
             include='#include "{}"'.format(self.name[:-6] + '.h'),
             enums=enum_impls,
             messages=message_impls
+        ), python_template.format(
+            include='#include "{}"'.format(self.name[:-6] + '.h'),
+            messages=indent(message_python),
+            enums=indent(enum_python),
+            filename=re.sub(r'[^A-Za-z0-9]', '_', self.name),
+            submodules=python_submodules
         )

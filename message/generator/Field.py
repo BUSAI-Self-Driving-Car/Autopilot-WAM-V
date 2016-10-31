@@ -4,7 +4,7 @@ import re
 from google.protobuf.descriptor_pb2 import FileDescriptorSet, FieldOptions
 
 # Add our cwd to the path so we can import generated python protobufs
-# And extend our options with our MessageOptions
+# And extend our options with our EnhancedMessage protobuf
 sys.path.append(os.getcwd() + '/..')
 from EnhancedMessage_pb2 import pointer, PointerType, array_size
 FieldOptions.RegisterExtension(pointer)
