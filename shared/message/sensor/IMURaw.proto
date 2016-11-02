@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message.sensor;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+
+message IMURaw {
+    google.protobuf.Timestamp timestamp = 1;
+    fvec3 accelerometer = 2;
+    fvec3 gyroscope = 3;
+    fvec3 magnetometer = 4;
+}

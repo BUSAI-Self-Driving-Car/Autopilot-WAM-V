@@ -5,6 +5,7 @@
 #include "message/communication/GamePad.h"
 #include "message/propulsion/TorqeedoStatus.h"
 #include "message/sensor/GPSRaw.h"
+#include "message/sensor/IMURaw.h"
 
 namespace module {
 namespace support {
@@ -13,6 +14,7 @@ namespace logging {
     using extension::Configuration;
     using message::communication::GamePad;
     using message::sensor::GPSRaw;
+    using message::sensor::IMURaw;
     using message::propulsion::TorqeedoStatus;
 
     DataLogging::DataLogging(std::unique_ptr<NUClear::Environment> environment)
@@ -86,6 +88,10 @@ namespace logging {
         });
 
         on<Trigger<GPSRaw>>().then([this] (const GPSRaw& d) {
+            emit(log_encode(d));
+        });
+
+        on<Trigger<IMURaw>>().then([this] (const IMURaw& d) {
             emit(log_encode(d));
         });
 
