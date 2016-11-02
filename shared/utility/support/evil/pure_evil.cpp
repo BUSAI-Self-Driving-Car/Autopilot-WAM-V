@@ -25,6 +25,15 @@
 
 #include <iostream>
 
+namespace utility {
+    namespace support {
+        namespace evil {
+            thread_local std::vector<StackFrame> stack;
+            thread_local std::string exception_name;
+        }
+    }
+}
+
 extern "C" {
 
     // Don't know what to do with this
@@ -96,9 +105,6 @@ extern "C" {
 
         rethrow(ex, info, dest);
     }
-
-    thread_local std::vector<StackFrame> stack;
-    thread_local std::string exception_name;
 }
 
 #endif  // NDEBUG or APPLE
