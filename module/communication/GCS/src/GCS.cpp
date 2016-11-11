@@ -41,8 +41,8 @@ namespace communication {
 
             auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
             setpoint->port.throttle = -gamePad.left_analog_stick.y();
-            setpoint->port.azimuth = gamePad.left_analog_stick.x();
-            setpoint->starboard.throttle = -gamePad.right_analog_stick.y();
+            setpoint->port.azimuth = gamePad.right_analog_stick.x();
+            setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
             setpoint->starboard.azimuth = gamePad.right_analog_stick.x();
 
            // log("Game Pad", setpoint->port.throttle, setpoint->port.azimuth, setpoint->starboard.throttle,  setpoint->starboard.azimuth);
