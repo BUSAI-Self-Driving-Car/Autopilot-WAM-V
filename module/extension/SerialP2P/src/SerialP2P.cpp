@@ -14,13 +14,11 @@ namespace extension {
     using ::extension::P2PListen;
     using ::NUClear::dsl::operation::Unbind;
 
+    const std::vector<char> SerialP2P::MESSAGE_START{char(0x17), char(0xC0), char(0x42)};
+
     SerialP2P::SerialP2P(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment))
     , parseState(PARSE_STATE::WAIT){
-
-        MESSAGE_START[0] = 0x17;
-        MESSAGE_START[1] = 0xC0;
-        MESSAGE_START[2] = 0x42;
 
         on<Configuration>("SerialP2P.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file SerialP2P.yaml
@@ -29,8 +27,14 @@ namespace extension {
             std::string radioDevice = config["device"];
             unsigned int radioBaud = config["baud"];
 
-            uart.close();
-            uart.open(radioDevice, radioBaud);
+            try {
+                uart.close();
+                uart.open(radioDevice, radioBaud);
+            }
+            catch(std::exception& ex) {
+                log(ex.what());
+            }
+            log<NUClear::INFO>("P2P connected to", radioDevice, "with baud", radioBaud);
         });
 
         on<Trigger<P2PListen>>().then([this](const P2PListen& value){
@@ -49,8 +53,40 @@ namespace extension {
             }
         });
 
-        on<Trigger<P2PEmit>>().then([this](const P2PEmit& value){
-            //TODO: send over uart
+        on<Trigger<P2PEmit>, Sync<SerialP2P>>().then([this](const P2PEmit& value){
+
+            if (!uart.good()) return;
+
+            // HEADER
+            writebuffer.resize(0);
+            writebuffer.insert(writebuffer.begin(), MESSAGE_START.begin(), MESSAGE_START.end());
+
+            // MESSAGE TYPE
+            uint32_t hash = static_cast<uint32_t>(value.hash[0]);
+            const char* msg_type = reinterpret_cast<const char*>(&hash);
+            writebuffer.insert(writebuffer.end(), msg_type, msg_type+4);
+
+            // MESSAGE SIZE
+            uint32_t size = value.payload.size();
+            const char* msg_size = reinterpret_cast<const char*>(&size);
+            writebuffer.insert(writebuffer.end(), msg_size, msg_size+4);
+
+            // MESSAGE DATA
+            writebuffer.insert(writebuffer.end(), value.payload.begin(), value.payload.end());
+
+            // CHECKSUM
+            boost::crc_32_type crc32;
+            crc32.process_bytes(value.payload.data(), value.payload.size());
+            auto checksum = crc32.checksum();
+            const char* crc = reinterpret_cast<const char*>(&checksum);
+
+            writebuffer.push_back(crc[3]);
+            writebuffer.push_back(crc[2]);
+            writebuffer.push_back(crc[1]);
+            writebuffer.push_back(crc[0]);
+
+            uart.write(writebuffer.data(), writebuffer.size());
+
         });
 
         on<IO,Priority::HIGH>(uart.native_handle(), IO::READ).then("Read", [this]{
@@ -86,6 +122,7 @@ namespace extension {
 
                 case PARSE_STATE::TYPE :
                     if (len == 4) {
+
                         messageType = (*(reinterpret_cast<const uint32_t*>(readbuffer.data())));
                         readbuffer.resize(0);
                         parseState = PARSE_STATE::SIZE;
@@ -110,6 +147,7 @@ namespace extension {
                          parseState = PARSE_STATE::CRC;
                     }
                     break;
+
                  case PARSE_STATE::CRC :
                     if (len == 4 &&  messageData.size() == messageSize) {
                         boost::crc_32_type crc32;
@@ -139,7 +177,6 @@ namespace extension {
                 default:
                     log("Unknown PARSE STATE", parseState);
                     parseState = PARSE_STATE::WAIT;
-                    //throw std::runtime_error("Unknown PARSE STATE");
                 }
             }
 

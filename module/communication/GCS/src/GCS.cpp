@@ -6,8 +6,10 @@
 #include "message/propulsion/PropulsionSetpoint.h"
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
+#include "message/communication/GPSTelemetry.h"
+#include "message/sensor/GPSRaw.h"
 #include <functional>
-
+#include <chrono>
 
 namespace module {
 namespace communication {
@@ -17,6 +19,8 @@ namespace communication {
     using message::communication::GamePad;
     using message::propulsion::PropulsionStart;
     using message::propulsion::PropulsionStop;
+    using message::communication::GPSTelemetry;
+    using message::sensor::GPSRaw;
 
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
@@ -45,8 +49,19 @@ namespace communication {
             setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
             setpoint->starboard.azimuth = gamePad.right_analog_stick.x();
 
-           // log("Game Pad", setpoint->port.throttle, setpoint->port.azimuth, setpoint->starboard.throttle,  setpoint->starboard.azimuth);
-            emit(setpoint);
+           emit(setpoint);
+        });
+
+        on<Trigger<GPSRaw>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
+
+            auto gps = std::make_unique<GPSTelemetry>();
+            gps->lat = msg.lla(0);
+            gps->lng = msg.lla(1);
+            gps->alt = msg.lla(2);
+            gps->sats = msg.satellites.size();
+            gps->fix = msg.fix_type.value;
+
+            emit<P2P>(gps);
         });
     }
 }

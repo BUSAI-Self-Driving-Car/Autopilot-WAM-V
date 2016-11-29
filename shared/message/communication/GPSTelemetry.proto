@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package message.communication;
+
+message GPSTelemetry {
+    double lat = 1;
+    double lng = 2;
+    double alt = 3;
+    uint32 sats = 4;
+    uint32 fix = 5;
+}

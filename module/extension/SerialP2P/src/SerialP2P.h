@@ -22,11 +22,11 @@ namespace extension {
         explicit SerialP2P(std::unique_ptr<NUClear::Environment> environment);
 
     private:
+        static const std::vector<char> MESSAGE_START;
         std::multimap<uint32_t, std::shared_ptr<NUClear::threading::Reaction>> handlers;
-
-        char MESSAGE_START[3];
         utility::io::uart uart;
         std::vector<char> readbuffer;
+        std::vector<char> writebuffer;
         PARSE_STATE parseState;
         uint32_t messageType;
         uint32_t messageSize;
