@@ -6,9 +6,9 @@ import re
 from google.protobuf.descriptor_pb2 import FileDescriptorSet, FieldOptions
 
 # Add our cwd to the path so we can import generated python protobufs
-# And extend our options with our EnhancedMessage protobuf
+# And extend our options with our Neutron protobuf
 sys.path.append(os.getcwd() + '/..')
-from EnhancedMessage_pb2 import pointer, PointerType, array_size
+from Neutron_pb2 import pointer, PointerType, array_size
 FieldOptions.RegisterExtension(pointer)
 FieldOptions.RegisterExtension(array_size)
 PointerType = dict(PointerType.items())
