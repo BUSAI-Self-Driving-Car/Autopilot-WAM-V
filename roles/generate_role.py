@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
 #
 # File:   generate.py
 # Authors:
@@ -116,7 +117,7 @@ with open(role_name, 'w') as file:
     start = """
 
     NUClear::PowerPlant::Configuration config;
-    unsigned int nThreads = std::thread::hardware_concurrency();
+    unsigned int nThreads = std::thread::hardware_concurrency() + 2;
     config.threadCount = nThreads >= 4 ? nThreads : 4;
 
     NUClear::PowerPlant plant(config, argc, const_cast<const char**>(argv));

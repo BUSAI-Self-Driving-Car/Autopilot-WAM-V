@@ -47,7 +47,13 @@ FUNCTION(NUCLEAR_MODULE)
     IF(NOT MODULE_LANGUAGE OR MODULE_LANGUAGE STREQUAL "CPP")
 
         # A CPP module just use sources in this directory
-        FILE(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/**.h")
+        FILE(GLOB_RECURSE src
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.c"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.hpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.ipp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/**.h")
 
     # Python Code
     ELSEIF(MODULE_LANGUAGE STREQUAL "PYTHON")

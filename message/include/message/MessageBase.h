@@ -34,8 +34,12 @@ namespace NUClear {
                     protobuf_type out;
 
                     // Deserialize it
-                    out.ParseFromArray(in.data(), in.size());
-                    return out;
+                    if (out.ParseFromArray(in.data(), in.size())) {
+                        return out;
+                    }
+                    else {
+                        throw std::runtime_error("Message failed to deserialise.");
+                    }
                 }
 
                 static inline std::array<uint64_t, 2> hash() {

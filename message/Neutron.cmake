@@ -20,7 +20,7 @@ INCLUDE_DIRECTORIES(${NUCLEAR_MESSAGE_INCLUDE_DIRS})
 SET(message_source_dir "${PROJECT_SOURCE_DIR}/${NUCLEAR_MESSAGE_DIR}")
 SET(message_binary_dir "${PROJECT_BINARY_DIR}/${NUCLEAR_MESSAGE_DIR}")
 
-# We need protobuf and python to generate the enhanced messages
+# We need protobuf and python to generate the neutron messages
 FIND_PACKAGE(Protobuf REQUIRED)
 FIND_PACKAGE(PythonInterp 3 REQUIRED)
 
@@ -162,7 +162,7 @@ FOREACH(proto ${protobufs})
         WORKING_DIRECTORY ${message_binary_dir}
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/build_message_class.py"
                 ${message_class_generator_depends}
-                "${message_binary_include_dir}/EnhancedMessage_pb2.py"
+                "${message_binary_include_dir}/Neutron_pb2.py"
                 "${outputpath}/${file_we}.pb"
         COMMENT "Building classes for ${proto}")
 

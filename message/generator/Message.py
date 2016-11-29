@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from generator.textutil import indent, dedent
 from generator.Field import Field
 from generator.Enum import Enum
