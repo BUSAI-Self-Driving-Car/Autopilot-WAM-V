@@ -53,7 +53,7 @@ def run(ip_addr, config, user, **kwargs):
 
     if config in ['new', 'n']:
         cprint('Adding new configuration files to the target', 'blue', attrs=['bold'])
-        call(['rsync', '-avzPL', '--checksum', '--ignore-existing', '-e ssh', 'config', target_dir])
+        call(['rsync', '-avzPL', '--checksum', '--ignore-existing', '-e ssh', config_dir, target_dir])
 
     if config in ['ignore', 'i']:
         cprint('Ignoring configuration changes', 'blue', attrs=['bold'])
