@@ -1,6 +1,8 @@
 NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
+    extension::FileWatcher
+    extension::SerialP2P
     sensor::GPS
     sensor::IMU
     control::ModelPredictiveController
