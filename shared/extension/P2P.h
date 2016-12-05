@@ -14,10 +14,10 @@ namespace extension {
     };
 
     struct P2PEmit {
-        P2PEmit() : hash(), data() {}
+        P2PEmit() : hash(), payload() {}
 
         std::array<uint64_t, 2> hash;
-        std::vector<char> data;
+        std::vector<char> payload;
     };
 
     template <typename T>
@@ -51,7 +51,7 @@ namespace extension {
             auto e = std::make_unique<P2PEmit>();
 
             e->hash = NUClear::util::serialise::Serialise<T>::hash();
-            e->data = NUClear::util::serialise::Serialise<T>::serialise(*data);
+            e->payload = NUClear::util::serialise::Serialise<T>::serialise(*data);
 
             powerplant.emit<NUClear::dsl::word::emit::Direct>(e);
         }
