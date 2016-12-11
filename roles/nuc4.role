@@ -4,9 +4,6 @@ NUCLEAR_ROLE(
     extension::FileWatcher
     extension::SerialP2P
     support::logging::DataLogging
-    sensor::NetworkRelay
-    actuator::Propulsion
-    actuator::Rudder
-    navigation::StateEstimator
-    communication::GCS
+    sensor::GPS
+    sensor::IMU
 )
