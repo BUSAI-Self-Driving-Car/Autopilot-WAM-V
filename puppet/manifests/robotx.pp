@@ -92,10 +92,16 @@ node robotx {
                        'args'        => { 'native'   => [ 'CCASFLAGS="-f elf64"', ],
                                           'nuc' => [ 'CCASFLAGS="-f elf64"', ],
                                           'e38' => [ 'CCASFLAGS="-f elf64"', ], },
-
                        'method'      => 'autotools',},
+
     'cppformat'    => {'url'         => 'https://github.com/cppformat/cppformat/archive/2.0.0.tar.gz',
-                       'method'      => 'cmake',},
+                       'method'      => 'cmake', },
+
+    'ffmpeg'       => {'url'         => 'http://ffmpeg.org/releases/ffmpeg-3.2.2.tar.bz2',
+                       'args'        => { 'native'   => [ '--enable-gpl', '--enable-libx264', ],
+                                          'nuc' => [ '--enable-gpl', '--enable-libx264', ],
+                                          'e38' => [ '--enable-gpl', '--enable-libx264', ], },
+                       'method'      => 'autotools', },
 
     'portaudio'    => {'url'         => 'http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz',
                        'args'        => { 'native'   => [ '', ],
@@ -282,10 +288,6 @@ node robotx {
     method    => 'wget',
   }
 
-  # Perform any complicated postbuild instructions here.
-  $archs.each |String $arch, Hash $params| {
-  }
-
   archive { "Spinnaker":
     url              => "http://nubots.net/tarballs/spinnaker_1_0_0_295_amd64.tar.gz",
     target           => "/robotx/toolchain/src/Spinnaker",
@@ -298,25 +300,30 @@ node robotx {
     strip_components => 1,
     root_dir         => '.',
     require          => [ Class['installer::prerequisites'], Class['dev_tools'], ],
-  } ->
-  exec { "Spinnaker_Files":
-    creates  => "/robotx/toolchain/include/Spinnaker.h",
-    command  => "cd include && cp -r ./* /robotx/toolchain/include/ && cd .. &&
-                 cd lib &&
-                 cp libGCBase_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cp libGenApi_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cp libLog_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cp libMathParser_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cp libNodeMapData_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cp libptgreyvideoencoder.so* /robotx/toolchain/lib/ &&
-                 cp libSpinnaker.so* /robotx/toolchain/lib/ &&
-                 cp libXmlParser_gcc540_v3_0.so* /robotx/toolchain/lib/ &&
-                 cd ..",
-    cwd      => "/robotx/toolchain/src/Spinnaker",
-    path     =>  [ "${prefix}/${arch}/bin", "${prefix}/bin",
-                   '/usr/local/bin', '/usr/local/sbin/', '/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/' ],
-    timeout  => 0,
-    provider => 'shell',
+  }
+
+  # Perform any complicated postbuild instructions here.
+  $archs.each |String $arch, Hash $params| {
+    exec { "${arch}_Spinnaker_Files":
+      creates  => "/robotx/toolchain/$arch/include/Spinnaker.h",
+      command  => "cd include && cp -r ./* /robotx/toolchain/$arch/include/ && cd .. &&
+                   cd lib &&
+                   cp libGCBase_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libGenApi_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libLog_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libMathParser_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libNodeMapData_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libptgreyvideoencoder.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libSpinnaker.so* /robotx/toolchain/$arch/lib/ &&
+                   cp libXmlParser_gcc540_v3_0.so* /robotx/toolchain/$arch/lib/ &&
+                   cd ..",
+      cwd      => "/robotx/toolchain/src/Spinnaker",
+      path     =>  [ "${prefix}/${arch}/bin", "${prefix}/bin",
+                     '/usr/local/bin', '/usr/local/sbin/', '/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/' ],
+      timeout  => 0,
+      provider => 'shell',
+      require  => Archive['Spinnaker'],
+    }
   }
 
   $archs.each |String $arch, Hash $params| {
