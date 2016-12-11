@@ -14,6 +14,14 @@ namespace control {
         explicit ControlAllocation(std::unique_ptr<NUClear::Environment> environment);
     private:
         QPControlAllocation qpControlAllocation;
+        double Kfwd;
+        double Krev;
+        double Pfwd;
+        double Prev;
+        double Maxradpersecfwd;
+        double Maxradpersecrev;
+
+        double force2Torqueedo(double F, double u);
     };
 
 }

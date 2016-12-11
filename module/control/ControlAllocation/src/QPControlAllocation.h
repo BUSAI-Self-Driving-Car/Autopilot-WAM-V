@@ -32,8 +32,10 @@ public:
         double Fmax;            // Maximum Force output of a single motor
         double alphaMin;        // Minimum angle of a single motor
         double alphaMax;        // Maximum angle of a single motor
-        double DeltaAlphaMin;   // Minimum discrete slew rate per time step of a single motor
-        double DeltaAlphaMax;   // Maximum discrete slew rate per time step of a single motor
+        double DeltaFmin;       // Minimum discrete force slew rate per time step of a single motor
+        double DeltaFmax;       // Maximum discrete force slew rate per time step of a single motor
+        double DeltaAlphaMin;   // Minimum discrete angle slew rate per time step of a single motor
+        double DeltaAlphaMax;   // Maximum discrete angle slew rate per time step of a single motor
     };
 
     QPControlAllocation();
