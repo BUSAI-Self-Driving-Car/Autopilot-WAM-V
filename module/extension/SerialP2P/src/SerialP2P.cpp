@@ -44,9 +44,9 @@ namespace extension {
         });
 
         on<Trigger<Unbind<P2PListen>>>().then([this](const Unbind<P2PListen>& value){
-            auto reactionId = value.reactionId;
+            auto id = value.id;
             for (auto it = handlers.begin(); it != handlers.end(); ++it) {
-               if (reactionId == it->second->reactionId) {
+               if (id == it->second->id) {
                    handlers.erase(it);
                    break;
                }

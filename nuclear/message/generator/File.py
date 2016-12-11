@@ -55,10 +55,8 @@ class File:
         for d in self.dependencies:
             if d in ['Vector.proto', 'Matrix.proto']:
                 includes.add('4"message/conversion/proto_matrix.h"')
-            elif d in ['EnhancedMessage.proto']:
+            elif d in ['Neutron.proto']:
                 pass # We don't need to do anything for these ones
-            elif d in ['Transform.proto']:
-                includes.add('4"message/conversion/proto_transform.h"')
             elif d in ['google/protobuf/timestamp.proto', 'google/protobuf/duration.proto']:
                 includes.add('4"message/conversion/proto_time.h"')
             elif d in ['google/protobuf/struct.proto']:

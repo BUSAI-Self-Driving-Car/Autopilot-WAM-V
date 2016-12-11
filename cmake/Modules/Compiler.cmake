@@ -16,26 +16,7 @@
 # We need noncall exceptions so we can throw exceptions from signal handlers
 # This allows us to catch null pointer exceptions (segfaults)
 
-ADD_COMPILE_OPTIONS(-march=silvermont
-                    -mtune=silvermont
-                    -maes
-                    -mcx16
-                    -mfxsr
-                    -mmmx
-                    -mmovbe
-                    -mpclmul
-                    -mpopcnt
-                    -mprfchw
-                    -mrdrnd
-                    -msahf
-                    -msse
-                    -msse2
-                    -msse3
-                    -msse4
-                    -msse4.1
-                    -msse4.2
-                    -mssse3
-                    -fnon-call-exceptions
+ADD_COMPILE_OPTIONS(-fnon-call-exceptions
                     -Wall
                     -Wextra
                     -Wpedantic

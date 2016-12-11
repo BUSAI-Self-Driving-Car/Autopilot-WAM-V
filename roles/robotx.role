@@ -5,6 +5,8 @@ NUCLEAR_ROLE(
     extension::SerialP2P
     sensor::GPS
     sensor::IMU
+    actuator::Propulsion
+    actuator::Rudder
     control::ControlAllocation
     guidance::PathPlanner
     navigation::StateEstimator

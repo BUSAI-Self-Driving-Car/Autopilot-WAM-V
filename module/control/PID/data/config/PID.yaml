@@ -1,0 +1,62 @@
+surge:
+    velocity:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1
+
+    position:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1
+
+sway:
+    velocity:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1
+
+    position:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1
+
+heading:
+    velocity:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1
+
+    position:
+        P: 1
+        I: 0
+        D: 0
+        N: 1
+        slew_max: 1
+        slew_min: -1
+        sat_max: 1
+        sat_min: -1

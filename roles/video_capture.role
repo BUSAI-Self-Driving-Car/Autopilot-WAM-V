@@ -2,8 +2,5 @@ NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
     extension::FileWatcher
-    extension::SerialP2P
-    communication::GCS
-    actuator::Propulsion
-    actuator::Rudder
+    input::SpinnakerCamera
 )
