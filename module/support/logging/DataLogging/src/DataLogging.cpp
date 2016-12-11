@@ -6,6 +6,7 @@
 #include "message/propulsion/TorqeedoStatus.h"
 #include "message/sensor/GPSRaw.h"
 #include "message/sensor/IMURaw.h"
+#include "message/navigation/StateEstimate.h"
 
 namespace module {
 namespace support {
@@ -16,6 +17,7 @@ namespace logging {
     using message::sensor::GPSRaw;
     using message::sensor::IMURaw;
     using message::propulsion::TorqeedoStatus;
+    using message::navigation::StateEstimate;
 
     DataLogging::DataLogging(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -92,6 +94,10 @@ namespace logging {
         });
 
         on<Trigger<IMURaw>>().then([this] (const IMURaw& d) {
+            emit(log_encode(d));
+        });
+
+        on<Trigger<StateEstimate>>().then([this] (const StateEstimate& d) {
             emit(log_encode(d));
         });
 

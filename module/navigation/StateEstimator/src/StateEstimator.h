@@ -59,6 +59,12 @@ namespace navigation {
         uint64_t lastUpdatedms;
         unsigned int lagTolerance;
 
+        Eigen::Vector3d gpsVarianceDiag;
+        Eigen::Matrix<double, 9, 1> imuVarianceDiag;
+
+        StateDensity::vec_type x0;
+        StateDensity::vec_type P0_diag;
+
         void timeUpdate(double timestep);
         void emitState();
     };

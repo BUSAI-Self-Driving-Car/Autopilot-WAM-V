@@ -2,8 +2,8 @@
 
 #include "utility/convert/yaml-eigen.h"
 #include "extension/Configuration.h"
-#include "message/sensor/IMU.h"
-#include "message/sensor/GPS.h"
+#include "message/sensor/IMURaw.h"
+#include "message/sensor/GPSRaw.h"
 #include "message/navigation/StateEstimate.h"
 #include <opengnc/common/transforms/wgs84.hpp>
 #include "utility/Clock.h"
@@ -12,8 +12,8 @@ namespace module {
 namespace navigation {
 
     using extension::Configuration;
-    using message::sensor::IMU;
-    using message::sensor::GPS;
+    using message::sensor::IMURaw;
+    using message::sensor::GPSRaw;
     using message::navigation::StateEstimate;
 
     StateEstimator::StateEstimator(std::unique_ptr<NUClear::Environment> environment)
@@ -36,6 +36,7 @@ namespace navigation {
             imuMeasurementModel.set_Rib(config["mag_vector"].as<Matrix3d>());
             imuMeasurementModel.set_rIBb(config["rIBb"].as<Vector3d>());
             imuMeasurementModel.set_gn(config["gn"].as<Vector3d>());
+            imuVarianceDiag = config["imu_variance_diag"].as<VectorXd>();
 
             // GPS Parameters
             using namespace opengnc::common::transforms;
@@ -43,17 +44,23 @@ namespace navigation {
             auto rNOe = wgs84::geodetic_to_rectangular(gpsOrigin);
             auto Ren = wgs84::Ren_from_geodetic(gpsOrigin);
             gpsMeasurementModel.initialise(rNOe, Ren);
+            gpsVarianceDiag = config["gps_variance_diag"].as<Vector3d>();
 
             lagTolerance = config["lag_tolerance"].as<unsigned int>();
 
             //TODO: Initialise State Density
+            x0 = config["x_init"].as<StateDensity::vec_type>();
+            P0_diag = config["P_init_diag"].as<StateDensity::vec_type>();
+
+            stateDensity.mean() = x0;
+            stateDensity.covariance() = P0_diag.asDiagonal();
 
             lastUpdatedms = utility::Clock::ToMilli(NUClear::clock::now());
         });
 
-        on<Trigger<IMU>, Sync<StateEstimator>>()
-        .then("IMU Measurement", [this] (const IMU& meas) {
-            auto timestamp = utility::Clock::ToMilli(meas.timestamp);
+        on<Trigger<IMURaw>, Sync<StateEstimator>>()
+        .then("IMU Measurement", [this] (const IMURaw& msg) {
+            auto timestamp = utility::Clock::ToMilli(msg.timestamp);
             int lag = lastUpdatedms - timestamp;
 
             if (lag < lagTolerance) {
@@ -65,16 +72,24 @@ namespace navigation {
 
                 lastUpdatedms = timestamp;
 
-                IMUDensity imuDensity(meas.y,meas.Py);
-                imuMeasurementUpdate(stateDensity,imuDensity);
+                IMUDensity::vec_type y;
+                y << msg.accelerometer.cast<double>(),
+                     msg.gyroscope.cast<double>(),
+                     msg.magnetometer.cast<double>();
+
+                IMUDensity::mat_type Py = imuVarianceDiag.asDiagonal();
+
+                IMUDensity imuDensity(y, Py);
+
+                imuMeasurementUpdate(stateDensity, imuDensity);
 
                 emitState();
             }
         });
 
-        on<Trigger<GPS>, Sync<StateEstimator>>()
-        .then("GPS Measurement", [this] (const GPS& meas) {
-            auto timestamp = utility::Clock::ToMilli(meas.timestamp);
+        on<Trigger<GPSRaw>, Sync<StateEstimator>>()
+        .then("GPS Measurement", [this] (const GPSRaw& msg) {
+            auto timestamp = utility::Clock::ToMilli(msg.timestamp);
             int lag = lastUpdatedms - timestamp;
 
             if (lag < lagTolerance) {
@@ -86,8 +101,13 @@ namespace navigation {
 
                 lastUpdatedms = timestamp;
 
-                GPSDensity imuDensity(meas.y,meas.Py);
-                gpsMeasurementUpdate(stateDensity,imuDensity);
+                GPSDensity::vec_type y;
+                y << msg.lla;
+
+                GPSDensity::mat_type Py = gpsVarianceDiag.asDiagonal();
+
+                GPSDensity gpsDensity(y, Py);
+                gpsMeasurementUpdate(stateDensity, gpsDensity);
 
                 emitState();
             }
