@@ -12,11 +12,13 @@ namespace sensor {
     IMU::IMU(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
         , p2p(uart)
+        , emitNetwork(false)
     {
 
         on<Configuration>("IMU.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file IMU.yaml
             uart.open(config["device"].as<std::string>(), config["baud"].as<unsigned int>());
+            emitNetwork = config["emitNetwork"];
 
             p2p.registerMessageHandler<serialization_policy::IMU_MEASUREMENT>([this] (const serialization_policy::data<serialization_policy::IMU_MEASUREMENT>::type& imu)
             {
@@ -27,7 +29,12 @@ namespace sensor {
                 msg->gyroscope = Eigen::Map<const Eigen::Vector3f>(imu.gyroscope);
                 msg->magnetometer = Eigen::Map<const Eigen::Vector3f>(imu.magnetometer);
 
-                emit(msg);
+                if (emitNetwork) {
+                    emit<Scope::NETWORK>(msg);
+                }
+                else {
+                    emit(msg);
+                }
             });
 
             uart_handle.unbind();

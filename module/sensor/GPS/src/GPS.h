@@ -16,6 +16,7 @@ namespace sensor {
         ReactionHandle uart_handle;
         std::string buffer;
         message::sensor::GPSRaw state;
+        bool emitNetwork;
 
         void process();
 
