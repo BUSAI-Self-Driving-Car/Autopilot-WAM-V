@@ -56,7 +56,7 @@ namespace communication {
 
         on<Startup>().then([this]()
         {
-            emit(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
+            emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
         });
 
         on<Trigger<GPSRaw>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
