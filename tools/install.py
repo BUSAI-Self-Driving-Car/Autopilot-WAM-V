@@ -38,7 +38,7 @@ def run(ip_addr, config, user, toolchain, **kwargs):
     # Target location to install to
     target_dir = '{0}@{1}:/home/{0}/'.format(user, ip_addr)
     build_dir = b.binary_dir
-    config_dir = os.path.join(build_dir, 'config'
+    config_dir = os.path.join(build_dir, 'config')
 
     cprint('Installing binaries to ' + target_dir, 'blue', attrs=['bold'])
     files = glob.glob(os.path.join(build_dir, 'bin', '*'))
