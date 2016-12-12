@@ -86,9 +86,9 @@ DStarLite::Path DStarLite::operator () (const Eigen::SparseMatrix<int>& occupied
 
 void DStarLite::updateNeighbours(int x, int y, const Eigen::SparseMatrix<int>& occupied)
 {
-    for (int in = x-1; in <= x+1; ++x) {
+    for (int in = x-1; in <= x+1; ++in) {
 
-        for (int jn = y-1; jn <= y+1; ++y) {
+        for (int jn = y-1; jn <= y+1; ++jn) {
 
             if ( in >= 0 && in < rows && jn >= 0 && jn < cols && (in != x || jn != y) ) {
                 updateVertex(in, jn, occupied);
@@ -104,9 +104,9 @@ void DStarLite::updateVertex(int x, int y, const Eigen::SparseMatrix<int>& occup
         double temp = std::numeric_limits<double>::infinity();
         double transitionCost = std::numeric_limits<double>::infinity();
 
-        for (int iv = x-1; iv <= x+1; ++x) {
+        for (int iv = x-1; iv <= x+1; ++iv) {
 
-            for (int jv = y-1; jv <= y+1; ++y) {
+            for (int jv = y-1; jv <= y+1; ++jv) {
 
                 if ( iv >= 0 && iv < rows && jv >= 0 && jv < cols && (iv != x || jv != y) ) {
 
