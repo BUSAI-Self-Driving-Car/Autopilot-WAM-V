@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package message.vision;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+import "Matrix.proto";
+
+message Image {
+
+    google.protobuf.Timestamp timestamp = 1;
+    string camera_id = 2;
+    uint32 format = 3; // Defined using its FOURCC code http://www.fourcc.org/
+    uvec2 dimensions = 4;
+    cmat payload = 5;
+}

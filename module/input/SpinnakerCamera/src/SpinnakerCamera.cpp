@@ -1,11 +1,11 @@
 #include "SpinnakerCamera.h"
 
-#include "message/support/Configuration.h"
+#include "extension/Configuration.h"
 
 namespace module {
 namespace input {
 
-    using message::support::Configuration;
+    using extension::Configuration;
     using namespace utility::vision;
 
     SpinnakerCamera::SpinnakerCamera(std::unique_ptr<NUClear::Environment> environment)
@@ -20,9 +20,9 @@ namespace input {
             }
         });
 
-        on<Configuration>("Cameras").then([this] (const Configuration& config)
+        on<Configuration>("cameras").then([this] (const Configuration& config)
         {
-            log("Found ", camList.GetSize(), " cameras.");
+            log<NUClear::DEBUG>("Found ", camList.GetSize(), " cameras.");
 
             if (camList.GetSize() < 1)
             {
@@ -31,7 +31,7 @@ namespace input {
 
             std::string serialNumber = config["device"]["serial"].as<std::string>();
 
-            log("Processing camera with serial number ", serialNumber);
+            log<NUClear::DEBUG>("Processing camera", config.path, "with serial number", serialNumber);
 
             // See if we already have this camera
             auto camera = cameras.find(serialNumber);
@@ -54,7 +54,7 @@ namespace input {
 
                 else
                 {
-                    log("Failed to find camera with serial number: ", serialNumber);
+                    log<NUClear::WARN>("Failed to find camera", config.path, " with serial number: ", serialNumber);
                     return;
                 }
             }
@@ -79,7 +79,7 @@ namespace input {
                 if (IsAvailable(newPixelFormat) && IsReadable(newPixelFormat))
                 {
                     ptrPixelFormat->SetIntValue(newPixelFormat->GetValue());
-                    
+
                     log("Pixel format for camera ", camera->first," set to ", format);
                 }
 
@@ -155,7 +155,7 @@ namespace input {
             }
 
             Spinnaker::GenApi::CEnumEntryPtr ptrAcquisitionModeContinuous = ptrAcquisitionMode->GetEntryByName("Continuous");
-            
+
             if (!IsAvailable(ptrAcquisitionModeContinuous) || !IsReadable(ptrAcquisitionModeContinuous))
             {
                 log("Failed to retrieve continuous acquisition mode entry for camera ", camera->first);

@@ -6,16 +6,15 @@
 #include <Spinnaker.h>
 #include <SpinGenApi/SpinnakerGenApi.h>
 
-#include "message/input/Image.h"
+#include "message/vision/Image.h"
 
 #include "utility/vision/fourcc.h"
-
 
 namespace module {
 namespace input {
 
     struct ImageEvent : public Spinnaker::ImageEvent {
-        ImageEvent(const std::string& serialNumber, Spinnaker::CameraPtr&& camera, NUClear::Reactor& reactor, const utility::vision::FOURCC& fourcc) 
+        ImageEvent(const std::string& serialNumber, Spinnaker::CameraPtr&& camera, NUClear::Reactor& reactor, const utility::vision::FOURCC& fourcc)
             : serialNumber(serialNumber), camera(std::move(camera)), reactor(reactor), fourcc(fourcc) {}
         ~ImageEvent()
         {
@@ -37,12 +36,16 @@ namespace input {
             // Check image retrieval status
             if (!image->IsIncomplete())
             {
-                auto timestamp = NUClear::clock::time_point(std::chrono::nanoseconds(image->GetTimeStamp()));
-                std::vector<uint8_t> data((uint8_t*)image->GetData(), (uint8_t*)image->GetData() + image->GetBufferSize());
+                auto msg = std::make_unique<message::vision::Image>(NUClear::clock::time_point(std::chrono::nanoseconds(image->GetTimeStamp())));
 
-                //NUClear::log("New image: width = ", image->GetWidth(), ", height = ", image->GetHeight(), ", bytes = ", image->GetBufferSize());
+                msg->camera_id = serialNumber;
+                msg->format = fourcc;
+                msg->dimensions[0] = image->GetWidth();
+                msg->dimensions[1] = image->GetHeight();
 
-                reactor.emit(std::make_unique<message::input::Image>(serialNumber, image->GetWidth(), image->GetHeight(), timestamp, fourcc, std::move(data)));
+                msg->payload = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(reinterpret_cast<uint8_t*>(image->GetData()), image->GetHeight(), image->GetStride());
+
+                reactor.emit(msg);
             }
         }
     };
