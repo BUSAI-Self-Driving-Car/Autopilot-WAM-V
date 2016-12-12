@@ -9,12 +9,14 @@
 #include "message/propulsion/PropulsionStop.h"
 #include "message/communication/GPSTelemetry.h"
 #include "message/sensor/GPSRaw.h"
+#include "message/sensor/IMURaw.h"
 #include "message/status/Mode.h"
 #include "message/navigation/StateEstimate.h"
 #include "utility/policy/VehicleState.hpp"
 #include <opengnc/common/math.hpp>
 #include <functional>
 #include <chrono>
+#include "utility/Clock.h"
 
 namespace module {
 namespace communication {
@@ -28,13 +30,16 @@ namespace communication {
     using message::propulsion::PropulsionStop;
     using message::communication::GPSTelemetry;
     using message::sensor::GPSRaw;
+    using message::sensor::IMURaw;
     using message::status::Mode;
     using message::communication::Status;
     using message::navigation::StateEstimate;
     using StatePolicy = utility::policy::VehicleState;
+    using utility::Clock;
 
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
+        , mode(Mode::Type::MANUAL)
     {
         on<Configuration>("GCS.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file GCS.yaml
@@ -46,43 +51,57 @@ namespace communication {
             setpoint->starboard.throttle = 0;
             setpoint->starboard.azimuth = 0;
 
+            mode = Mode::Type::MANUAL;
+
             emit(setpoint);
         });
 
-        on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad){
+        on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad) {
 
-            if (gamePad.A) {
-                auto start = std::make_unique<PropulsionStart>();
-                emit(start);
-                log("Propulsion Start");
+            if (gamePad.LB){
+                mode = Mode::Type::AUTONOMOUS;
+                emitMode();
+            }
+            if (gamePad.RB) {
+                mode = Mode::Type::MANUAL;
+                emitMode();
             }
 
-            if (gamePad.B) {
-                auto stop = std::make_unique<PropulsionStop>();
-                emit(stop);
-                log("Propulsion Stop");
-            }
+            if (mode == Mode::Type::MANUAL) {
 
-            if (manual_mode_type == 1) {
-                auto setpoint = std::make_unique<PropulsionSetpoint>();
-                setpoint->port.throttle = -gamePad.left_analog_stick.y();
-                setpoint->port.azimuth = -gamePad.right_analog_stick.x();
-                setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
-                setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
+                if (gamePad.A) {
+                    auto start = std::make_unique<PropulsionStart>();
+                    emit(start);
+                    log("Propulsion Start");
+                }
 
-                emit(setpoint);
+                if (gamePad.B) {
+                    auto stop = std::make_unique<PropulsionStop>();
+                    emit(stop);
+                    log("Propulsion Stop");
+                }
 
-            }
-            else if (manual_mode_type == 2) {
+                if (manual_mode_type == 1) {
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
+                    setpoint->port.throttle = -gamePad.left_analog_stick.y();
+                    setpoint->port.azimuth = -gamePad.right_analog_stick.x();
+                    setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
+                    setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
 
-                Eigen::Vector3d input;
-                input << -1200 * gamePad.left_analog_stick.y(),
-                        -600 * gamePad.left_analog_stick.x(),
-                        -1200 * gamePad.right_analog_stick.x();
+                    emit(setpoint);
 
-                auto tau = std::make_unique<Tau>();
-                tau->value  = input;
-                emit(tau);
+                }
+                else if (manual_mode_type == 2) {
+
+                    Eigen::Vector3d input;
+                    input << -1200 * gamePad.left_analog_stick.y(),
+                               600 * gamePad.left_analog_stick.x(),
+                              1200 * gamePad.right_analog_stick.x();
+
+                    auto tau = std::make_unique<Tau>();
+                    tau->value  = input;
+                    emit(tau);
+                }
             }
         });
 
@@ -91,12 +110,17 @@ namespace communication {
             emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
         });
 
+        on<Trigger<IMURaw>, Sync<GCS>>().then([this](const IMURaw& msg) {
+            lastStatus.last_imu_ts = Clock::ToMilli(msg.timestamp);
+        });
+
         on<Trigger<GPSRaw>, Sync<GCS>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
             lastStatus.lat = msg.lla(0);
             lastStatus.lng = msg.lla(1);
             lastStatus.alt = msg.lla(2);
             lastStatus.sats = msg.satellites.size();
             lastStatus.fix = msg.fix_type.value;
+            lastStatus.last_gps_ts = Clock::ToMilli(msg.timestamp);
         });
 
         on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
@@ -106,11 +130,19 @@ namespace communication {
             lastStatus.surge_vel = StatePolicy::vBNb(msg.x)[0];
             lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
             lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
+            lastStatus.last_state_ts = Clock::ToMilli(msg.timestamp);
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
             emit<P2P>(std::make_unique<Status>(lastStatus));
         });
+    }
+
+    void GCS::emitMode()
+    {
+        auto msg = std::make_unique<Mode>();
+        msg->type = mode;
+        emit<Scope::NETWORK, Scope::LOCAL>(msg);
     }
 }
 }

@@ -4,6 +4,7 @@
 #include <nuclear>
 #include <mutex>
 #include "message/communication/Status.h"
+#include "message/status/Mode.h"
 
 
 namespace module {
@@ -13,6 +14,9 @@ namespace communication {
 
         message::communication::Status lastStatus;
         uint manual_mode_type;
+        message::status::Mode::Type mode;
+
+        void emitMode();
     public:
         /// @brief Called by the powerplant to build and setup the GCS reactor.
         explicit GCS(std::unique_ptr<NUClear::Environment> environment);
