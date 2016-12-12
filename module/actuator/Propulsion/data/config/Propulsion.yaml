@@ -1,16 +1,8 @@
 thrusters:
   port:
-    torqeedo_device: "/dev/ttyS0"
+    torqeedo_device: "/dev/port_torqeedo"
     torqeedo_baud: 19200
-    stepper_device: "/dev/ttyUSB0"
-    stepper_baud: 9600
-    thetaMax: 1.047197551   # 60 degrees
-    thetaMin: -1.047197551  # -60 degrees
 
   starboard:
-    torqeedo_device: "/dev/ttyS1"
+    torqeedo_device: "/dev/starboard_torqeedo"
     torqeedo_baud: 19200
-    stepper_device: "/dev/ttyUSB1"
-    stepper_baud: 9600
-    thetaMax: 1.047197551   # 60 degrees
-    thetaMin: -1.047197551  # -60 degrees
