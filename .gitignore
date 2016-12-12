@@ -78,6 +78,9 @@ build/
 # Logs and databases
 *.log
 
+# Vagrant
+.vagrant
+
 # LaTeX
 *.acn
 *.acr
