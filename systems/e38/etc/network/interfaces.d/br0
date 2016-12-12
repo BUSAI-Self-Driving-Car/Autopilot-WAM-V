@@ -1,0 +1,8 @@
+# Bridge interface between WiFI and local network
+auto br0
+iface br0 inet static
+    bridge_ports enp4s0 wlx00c0ca8fd9f3
+    address 192.168.1.1
+    network 192.168.1.0
+    netmask 255.255.255.0
+    broadcast 192.168.1.255

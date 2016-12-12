@@ -1,0 +1,3 @@
+# The primary network interface
+allow-hotplug enp0s25
+iface enp0s25 inet dhcp

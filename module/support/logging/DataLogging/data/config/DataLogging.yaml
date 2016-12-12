@@ -5,6 +5,6 @@ messages:
   message.sensor.GPSRaw: true
   message.sensor.IMURaw: true
   message.navigation.StateEstimate: true
-  message.vision.Image: true
+  message.vision.Image: false
   message.vision.CompressedImage: true
   message.propulsion.TorqueedoStatus: true
