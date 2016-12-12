@@ -3,7 +3,10 @@
 
 #include <nuclear>
 #include <x264.h>
-#include <libswscale/swscale.h>
+
+extern "C" {
+    #include <libswscale/swscale.h>
+}
 
 namespace module {
 namespace support {
@@ -11,9 +14,21 @@ namespace logging {
 
     class VideoCompressor : public NUClear::Reactor {
     private:
-        std::unique_ptr<SwsContext> swsContext;
-        std::unique_ptr<x264_t, std::function<void(x264_t*)>> encoder;
-        x264_param_t param;
+        std::unique_ptr<SwsContext, std::function<void(SwsContext*)>> swsContext;
+
+        struct Encoder {
+            std::unique_ptr<x264_t, std::function<void(x264_t*)>> encoder;
+            x264_nal_t* nals;
+            std::unique_ptr<x264_picture_t, std::function<void(x264_picture_t*)>> inputPicture;
+            x264_picture_t outputPicture;
+        };
+
+        x264_param_t compressionParams;
+
+        Encoder rEncoder;
+        Encoder g1Encoder;
+        Encoder g2Encoder;
+        Encoder bEncoder;
 
     public:
         /// @brief Called by the powerplant to build and setup the VideoCompressor reactor.
