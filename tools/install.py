@@ -39,7 +39,6 @@ def run(ip_addr, config, user, toolchain, **kwargs):
     target_dir = '{0}@{1}:/home/{0}/'.format(user, ip_addr)
     build_dir = b.binary_dir
     config_dir = os.path.join(build_dir, 'config')
-    platform_dir = '/robotx/toolchain/{0}'.format(b.cmake_cache["PLATFORM"])
 
 
     cprint('Installing binaries to ' + target_dir, 'blue', attrs=['bold'])
@@ -48,6 +47,7 @@ def run(ip_addr, config, user, toolchain, **kwargs):
 
     # If we are going to send the toolchain
     if toolchain:
+        platform_dir = '/robotx/toolchain/{0}'.format(b.cmake_cache["PLATFORM"])
 
         # Get all of our required shared libraries in our toolchain and send them
         cprint('Installing toolchain library files', 'blue', attrs=['bold'])
