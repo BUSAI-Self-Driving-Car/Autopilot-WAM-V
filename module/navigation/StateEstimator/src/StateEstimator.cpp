@@ -96,7 +96,7 @@ namespace navigation {
 
                 if (lag < 0) {
                     double timeStep = static_cast<double>(lag) / 1000;
-                    timeUpdate(timestamp);
+                    timeUpdate(timeStep);
                 }
 
                 lastUpdatedms = timestamp;
