@@ -66,7 +66,6 @@ namespace communication {
         });
 
         on<Trigger<GPSRaw>, Sync<GCS>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
-            lastStatus.timestamp = msg.timestamp;
             lastStatus.lat = msg.lla(0);
             lastStatus.lng = msg.lla(1);
             lastStatus.alt = msg.lla(2);
@@ -75,7 +74,6 @@ namespace communication {
         });
 
         on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
-            lastStatus.timestamp = msg.timestamp;
             lastStatus.north = StatePolicy::rBNn(msg.x)[0];
             lastStatus.east = StatePolicy::rBNn(msg.x)[1];
             lastStatus.heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(msg.x))[2];
