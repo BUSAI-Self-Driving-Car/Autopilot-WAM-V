@@ -30,14 +30,13 @@ namespace navigation {
 
             using namespace Eigen;
             // IMU Parameters
-
             imuMeasurementModel.set_mag_scale(config["mag_scale"].as<double>());
             imuMeasurementModel.set_mag_vector(config["mag_vector"].as<Vector3d>());
             imuMeasurementModel.set_Rib(config["mag_vector"].as<Matrix3d>());
             imuMeasurementModel.set_rIBb(config["rIBb"].as<Vector3d>());
             imuMeasurementModel.set_gn(config["gn"].as<Vector3d>());
-            imuVarianceDiag = config["imu_variance_diag"].as<VectorXd>();
-
+            imuVarianceDiag = config["imu_variance_diag"].as<Matrix<double,9,1>>();
+           
             // GPS Parameters
             using namespace opengnc::common::transforms;
             Vector3d gpsOrigin = config["gps_origin"].as<Vector3d>();
@@ -45,7 +44,6 @@ namespace navigation {
             auto Ren = wgs84::Ren_from_geodetic(gpsOrigin);
             gpsMeasurementModel.initialise(rNOe, Ren);
             gpsVarianceDiag = config["gps_variance_diag"].as<Vector3d>();
-
             lagTolerance = config["lag_tolerance"].as<unsigned int>();
 
             //TODO: Initialise State Density
@@ -56,7 +54,6 @@ namespace navigation {
             stateDensity.covariance() = P0_diag.asDiagonal();
 
             lastUpdatedms = utility::Clock::ToMilli(NUClear::clock::now());
-
             emitState();
 
         });
@@ -65,7 +62,6 @@ namespace navigation {
         .then("IMU Measurement", [this] (const IMURaw& msg) {
             auto timestamp = utility::Clock::ToMilli(msg.timestamp);
             int lag = lastUpdatedms - timestamp;
-
             if (lag < lagTolerance) {
 
                 if (lag < 0) {
@@ -98,8 +94,8 @@ namespace navigation {
             if (lag < lagTolerance) {
 
                 if (lag < 0) {
-                    double timeStep = static_cast<double>(lag) / 1000;
-                    timeUpdate(timeStep);
+                    double timestep = static_cast<double>(lag) / 1000;
+                    timeUpdate(timestep);
                 }
 
                 lastUpdatedms = timestamp;
