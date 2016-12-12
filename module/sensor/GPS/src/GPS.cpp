@@ -67,9 +67,9 @@ void GPS::process()
 
         try
         {
-            state.lla[0] = std::stod(tokens[2]);
+            state.lla[0] = std::stod(tokens[2])/100.0;
             if (tokens[3] == "S") { state.lla[0] *= -1; }
-            state.lla[1] = std::stod(tokens[4]);
+            state.lla[1] = std::stod(tokens[4])/100.0;
             if (tokens[5] == "W") { state.lla[1] *= -1; }
             state.fix_type = std::stoi(tokens[6]);
             state.hdop = std::stod(tokens[8]);
