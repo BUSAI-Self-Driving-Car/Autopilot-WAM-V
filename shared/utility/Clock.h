@@ -13,6 +13,12 @@ namespace utility {
             using namespace std::chrono;
             return   duration_cast<duration<uint64_t, std::milli>>(time_point.time_since_epoch()).count();
         }
+
+        static inline double ToMilli(const NUClear::clock::duration& d)
+        {
+            using namespace std::chrono;
+            return duration_cast<duration<double, std::milli>>(d).count();
+        }
     };
 }
 

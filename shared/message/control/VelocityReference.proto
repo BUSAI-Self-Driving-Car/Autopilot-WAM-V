@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package message.control;
+
+import "google/protobuf/timestamp.proto";
+import "Vector.proto";
+
+message VelocityReference
+{
+    google.protobuf.Timestamp timestamp = 1;
+    vec3 value = 2; // Surge, Sway, Yaw
+}
