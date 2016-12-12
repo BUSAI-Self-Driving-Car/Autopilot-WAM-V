@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package message.communication;
+
+message Status {
+    double lat = 1;
+    double lng = 2;
+    double alt = 3;
+    uint32 sats = 4;
+    uint32 fix = 5;
+    double north = 6;
+    double east = 7;
+    double heading = 8;
+    double surge_vel = 9;
+    double sway_vel = 10;
+    double yaw_rate = 11;
+}

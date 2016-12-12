@@ -3,11 +3,15 @@
 
 #include <nuclear>
 #include <mutex>
+#include "message/communication/Status.h"
+
 
 namespace module {
 namespace communication {
 
     class GCS : public NUClear::Reactor {
+
+        message::communication::Status lastStatus;
 
     public:
         /// @brief Called by the powerplant to build and setup the GCS reactor.

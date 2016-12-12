@@ -9,6 +9,9 @@
 #include "message/communication/GPSTelemetry.h"
 #include "message/sensor/GPSRaw.h"
 #include "message/status/Mode.h"
+#include "message/navigation/StateEstimate.h"
+#include "utility/policy/VehicleState.hpp"
+#include <opengnc/common/math.hpp>
 #include <functional>
 #include <chrono>
 
@@ -23,6 +26,9 @@ namespace communication {
     using message::communication::GPSTelemetry;
     using message::sensor::GPSRaw;
     using message::status::Mode;
+    using message::communication::Status;
+    using message::navigation::StateEstimate;
+    using StatePolicy = utility::policy::VehicleState;
 
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
@@ -59,16 +65,27 @@ namespace communication {
             emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
         });
 
-        on<Trigger<GPSRaw>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
+        on<Trigger<GPSRaw>, Sync<GCS>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
+            lastStatus.timestamp = msg.timestamp;
+            lastStatus.lat = msg.lla(0);
+            lastStatus.lng = msg.lla(1);
+            lastStatus.alt = msg.lla(2);
+            lastStatus.sats = msg.satellites.size();
+            lastStatus.fix = msg.fix_type.value;
+        });
 
-            auto gps = std::make_unique<GPSTelemetry>();
-            gps->lat = msg.lla(0);
-            gps->lng = msg.lla(1);
-            gps->alt = msg.lla(2);
-            gps->sats = msg.satellites.size();
-            gps->fix = msg.fix_type.value;
+        on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
+            lastStatus.timestamp = msg.timestamp;
+            lastStatus.north = StatePolicy::rBNn(msg.x)[0];
+            lastStatus.east = StatePolicy::rBNn(msg.x)[1];
+            lastStatus.heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(msg.x))[2];
+            lastStatus.surge_vel = StatePolicy::vBNb(msg.x)[0];
+            lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
+            lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
+        });
 
-            emit<P2P>(gps);
+        on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
+            emit<P2P>(std::make_unique<Status>(lastStatus));
         });
     }
 }
