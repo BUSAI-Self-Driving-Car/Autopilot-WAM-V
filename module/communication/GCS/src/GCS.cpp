@@ -3,6 +3,7 @@
 #include "extension/Configuration.h"
 #include "extension/P2P.h"
 #include "message/communication/GamePad.h"
+#include "message/control/Tau.h"
 #include "message/propulsion/PropulsionSetpoint.h"
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
@@ -21,6 +22,8 @@ namespace communication {
     using extension::Configuration;
     using extension::P2P;
     using message::communication::GamePad;
+    using message::control::Tau;
+    using message::propulsion::PropulsionSetpoint;
     using message::propulsion::PropulsionStart;
     using message::propulsion::PropulsionStop;
     using message::communication::GPSTelemetry;
@@ -35,6 +38,15 @@ namespace communication {
     {
         on<Configuration>("GCS.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file GCS.yaml
+            manual_mode_type = config["manual_mode_type"];
+
+            auto setpoint = std::make_unique<PropulsionSetpoint>();
+            setpoint->port.throttle = 0;
+            setpoint->port.azimuth = 0;
+            setpoint->starboard.throttle = 0;
+            setpoint->starboard.azimuth = 0;
+
+            emit(setpoint);
         });
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad){
@@ -51,13 +63,27 @@ namespace communication {
                 log("Propulsion Stop");
             }
 
-            auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
-            setpoint->port.throttle = -gamePad.left_analog_stick.y();
-            setpoint->port.azimuth = -gamePad.right_analog_stick.x();
-            setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
-            setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
+            if (manual_mode_type == 1) {
+                auto setpoint = std::make_unique<PropulsionSetpoint>();
+                setpoint->port.throttle = -gamePad.left_analog_stick.y();
+                setpoint->port.azimuth = -gamePad.right_analog_stick.x();
+                setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
+                setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
 
-           emit(setpoint);
+                emit(setpoint);
+
+            }
+            else if (manual_mode_type == 2) {
+
+                Eigen::Vector3d input;
+                input << -1200 * gamePad.left_analog_stick.y(),
+                        -600 * gamePad.left_analog_stick.x(),
+                        -1200 * gamePad.right_analog_stick.x();
+
+                auto tau = std::make_unique<Tau>();
+                tau->value  = input;
+                emit(tau);
+            }
         });
 
         on<Startup>().then([this]()

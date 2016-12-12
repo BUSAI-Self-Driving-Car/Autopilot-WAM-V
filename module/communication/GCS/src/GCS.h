@@ -12,7 +12,7 @@ namespace communication {
     class GCS : public NUClear::Reactor {
 
         message::communication::Status lastStatus;
-
+        uint manual_mode_type;
     public:
         /// @brief Called by the powerplant to build and setup the GCS reactor.
         explicit GCS(std::unique_ptr<NUClear::Environment> environment);

@@ -9,5 +9,6 @@ NUCLEAR_ROLE(
     actuator::Propulsion
     actuator::Rudder
     navigation::StateEstimator
+    control::ControlAllocation
     communication::GCS
 )

@@ -56,6 +56,9 @@ namespace navigation {
             stateDensity.covariance() = P0_diag.asDiagonal();
 
             lastUpdatedms = utility::Clock::ToMilli(NUClear::clock::now());
+
+            emitState();
+
         });
 
         on<Trigger<IMURaw>, Sync<StateEstimator>>()
