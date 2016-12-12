@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package message.vision;
+
+import "google/protobuf/timestamp.proto";
+
+message CompressedImage {
+
+    google.protobuf.Timestamp timestamp = 1;
+    uint32 format = 2; // Defined using its FOURCC code http://www.fourcc.org/
+    bytes payload = 3;
+}
