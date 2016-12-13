@@ -30,6 +30,7 @@ struct convert<Eigen::Matrix<_scalar,_rows,_cols>> {
             return false;
         }
 
+
         int rows = node.size();
         int cols = node[0].size();
 
@@ -39,10 +40,15 @@ struct convert<Eigen::Matrix<_scalar,_rows,_cols>> {
 
         for (int row=0; row < rows; ++row)
         {
-            Node row_node = node[row];
-            for (int col = 0; col < cols; ++col)
-            {
-                rhs(row,col) = row_node[col].as<double>();
+            if (_cols == 1) {
+                rhs(row) = node[row].as<double>();
+            }
+            else {
+                Node row_node = node[row];
+                for (int col = 0; col < cols; ++col)
+                {
+                    rhs(row,col) = row_node[col].as<double>();
+                }
             }
         }
 
