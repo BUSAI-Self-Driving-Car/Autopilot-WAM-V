@@ -41,6 +41,8 @@ namespace communication {
         : Reactor(std::move(environment))
         , mode(Mode::Type::MANUAL)
     {
+        lastStatus.num = 0;
+
         on<Configuration>("GCS.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file GCS.yaml
             manual_mode_type = config["manual_mode_type"];
@@ -111,7 +113,7 @@ namespace communication {
         });
 
         on<Trigger<IMURaw>, Sync<GCS>>().then([this](const IMURaw& msg) {
-            lastStatus.last_imu_ts = Clock::ToMilli(msg.timestamp);
+            lastStatus.imu_feq += 1;
         });
 
         on<Trigger<GPSRaw>, Sync<GCS>>().then("GPS Telemetry", [this](const GPSRaw& msg) {
@@ -120,7 +122,7 @@ namespace communication {
             lastStatus.alt = msg.lla(2);
             lastStatus.sats = msg.satellites.size();
             lastStatus.fix = msg.fix_type.value;
-            lastStatus.last_gps_ts = Clock::ToMilli(msg.timestamp);
+            lastStatus.gps_feq += 1;
         });
 
         on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
@@ -130,11 +132,15 @@ namespace communication {
             lastStatus.surge_vel = StatePolicy::vBNb(msg.x)[0];
             lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
             lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
-            lastStatus.last_state_ts = Clock::ToMilli(msg.timestamp);
+            lastStatus.imu_feq += 1;
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
+            lastStatus.num += 1;
             emit<P2P>(std::make_unique<Status>(lastStatus));
+            lastStatus.gps_feq = 0;
+            lastStatus.imu_feq = 0;
+            lastStatus.state_est_feq = 0;
         });
     }
 
