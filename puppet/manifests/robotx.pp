@@ -98,9 +98,9 @@ node robotx {
                        'method'      => 'cmake', },
 
     'ffmpeg'       => {'url'         => 'http://ffmpeg.org/releases/ffmpeg-3.2.2.tar.bz2',
-                       'args'        => { 'native'   => [ '--enable-gpl', '--enable-libx264', ],
-                                          'nuc' => [ '--enable-gpl', '--enable-libx264', ],
-                                          'e38' => [ '--enable-gpl', '--enable-libx264', ], },
+                       'args'        => { 'native'   => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ],
+                                          'nuc' => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ],
+                                          'e38' => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ], },
                        'method'      => 'autotools', },
 
     'portaudio'    => {'url'         => 'http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz',
