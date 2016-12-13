@@ -58,7 +58,7 @@ namespace communication {
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad) {
 
-            if (gamePad.LB){
+            if (gamePad.LB && gamePad.down){
                 mode = Mode::Type::AUTONOMOUS;
                 emitMode();
             }
@@ -140,6 +140,7 @@ namespace communication {
 
     void GCS::emitMode()
     {
+        lastStatus.mode = mode == Mode::Type::AUTONOMOUS ? 2 : 1;
         auto msg = std::make_unique<Mode>();
         msg->type = mode;
         emit<Scope::NETWORK, Scope::LOCAL>(msg);
