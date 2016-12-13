@@ -1,12 +1,14 @@
 #include "VideoCompressor.h"
 
 #include "extension/Configuration.h"
+#include "message/vision/Image.h"
 
 namespace module {
 namespace support {
 namespace logging {
 
     using extension::Configuration;
+    using message::vision::Image;
 
     VideoCompressor::VideoCompressor(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -25,7 +27,7 @@ namespace logging {
             param.i_height = height / 2;
             param.i_fps_num = 30;
             param.i_fps_den = 1;
-            // Intra refres:
+            // Intra refresh:
             param.i_keyint_max = 30;
             param.b_intra_refresh = 1;
             //Rate control:
@@ -38,7 +40,12 @@ namespace logging {
             param.b_annexb = 1;
             x264_param_apply_profile(&param, "baseline");
 
-            swsContext = sws_getContext(width / 2, height / 2, AV_PIX_FMT_GRAY8, width / 2, height / 2, AV_PIX_FMT_YUV420P, flags, nullptr, nullptr, nullptr);
+            encoder = std::unique_ptr<x264_t>(x264_encoder_open(&param), x264_encoder_close);
+            if (!encoder) {
+                log<NUClear::ERROR>("The x264 encoder failed to open");
+            }
+
+            swsContext = sws_getContext(width / 2, height / 2, AV_PIX_FMT_GRAY8, width / 2, height / 2, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR | SWS_PRINT_INFO, nullptr, nullptr, nullptr);
         });
 
         on<Trigger<Image>>().then([this] (const Image& image) {
@@ -46,16 +53,16 @@ namespace logging {
             using cmat = Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic>;
 
             // Split our image into components
-            int data_size = (image.dimension[0] * image.dimension[0]) / 4;
+            int data_size = (image.dimensions[0] * image.dimensions[0]) / 4;
 
             // Allocate some memory for each of the bytes
             std::vector<char> r;
             r.reserve(data_size);
-            std::vector g1;
+            std::vector<char> g1;
             g1.reserve(data_size);
-            std::vector g2;
+            std::vector<char> g2;
             g2.reserve(data_size);
-            std::vector g3;
+            std::vector<char> g3;
             b.reserve(data_size);
 
             for (int x = 0; x < image.payload.cols(); x += 2) {
@@ -78,16 +85,16 @@ namespace logging {
 
 
             // // Scale R
-            // sws_scale(swsContext.get(),  r.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
+            sws_scale(swsContext.get(),  r.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
 
             // // Scale G1
-            // sws_scale(swsContext.get(), g1.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
+            sws_scale(swsContext.get(), g1.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
 
             // // Scale G2
-            // sws_scale(swsContext.get(), g2.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
+            sws_scale(swsContext.get(), g2.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
 
             // // Scale B
-            // sws_scale(swsContext.get(),  b.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
+            sws_scale(swsContext.get(),  b.data(), &stride, 0, param.i_height, pic_in.img.plane, pic_in.img.i_stride);
 
 
 

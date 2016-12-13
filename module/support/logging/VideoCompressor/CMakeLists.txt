@@ -1,2 +1,9 @@
 # Build our NUClear module
-NUCLEAR_MODULE()
+FIND_PACKAGE(swscale REQUIRED)
+FIND_PACKAGE(x264 REQUIRED)
+
+# Build our NUClear module
+NUCLEAR_MODULE(
+    INCLUDES ${x264_INCLUDE_DIRS} ${swscale_INCLUDE_DIRS}
+    LIBRARIES ${x264_LIBRARIES} ${swscale_LIBRARIES}
+)
