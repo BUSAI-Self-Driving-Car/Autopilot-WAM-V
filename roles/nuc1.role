@@ -1,0 +1,5 @@
+NUCLEAR_ROLE(
+    support::SignalCatcher
+    support::logging::ConsoleLogHandler
+    actuator::LightTower
+)

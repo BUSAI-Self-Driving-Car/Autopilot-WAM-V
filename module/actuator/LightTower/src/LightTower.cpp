@@ -44,6 +44,8 @@ namespace actuator {
             }
         });
 
+        on<Network<Mode>>().then([this] (const Mode& mode) { emit(std::make_unique<Mode>(mode)); });
+
         on<Every<500, std::chrono::milliseconds>, With<Mode>>().then([this] (const Mode& mode)
         {
             switch (int(mode.type))
