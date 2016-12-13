@@ -124,7 +124,7 @@ void GPS::process()
         // Geographic lattitude and and longitude
         state.timestamp = NUClear::clock::now();
 
-        emit<Scope::NETWORK, Scope::LOCAL>(std::make_unique<message::sensor::GPSRaw>(state));
+        emit<Scope::NETWORK, Scope::LOCAL>(std::make_unique<message::sensor::GPSRaw>(state), "e38", true);
     }
 
 }
