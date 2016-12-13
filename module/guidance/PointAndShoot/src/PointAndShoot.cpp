@@ -37,7 +37,6 @@ namespace guidance {
                 start_tp = NUClear::clock::now();
                 stop = false;
             }
-
         });
 
         on<Every<10, std::chrono::milliseconds>>().then([this] {
@@ -57,7 +56,6 @@ namespace guidance {
                 stop = true;
                 setpoint->port.throttle = 0;
                 setpoint->starboard.throttle = 0;
-
             }
 
             emit(setpoint);
