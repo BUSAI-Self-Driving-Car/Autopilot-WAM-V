@@ -22,6 +22,9 @@ ADD_COMPILE_OPTIONS(-fnon-call-exceptions
                     -Wpedantic
                     -pthread)
 
+# Set our rpath
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH} toolchain/)
+
 # GNU Compiler
 IF(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     # Enable colours on g++ 4.9 or greater

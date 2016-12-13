@@ -38,22 +38,28 @@ namespace input {
 
             if (camera == cameras.end())
             {
-                Spinnaker::CameraPtr newCamera = camList.GetBySerial(serialNumber);
+                try {
+                    Spinnaker::CameraPtr newCamera = camList.GetBySerial(serialNumber);
 
-                // Ensure we found the camera.
-                if (newCamera)
-                {
-                    // Initlise the camera.
-                    newCamera->Init();
+                    // Ensure we found the camera.
+                    if (newCamera)
+                    {
+                        // Initlise the camera.
+                        newCamera->Init();
 
-                    // Add camera to list.
-                    FOURCC fourcc = getFourCCFromDescription(config["format"]["pixel"].as<std::string>());
-                    camera = cameras.insert(std::make_pair(serialNumber, std::make_unique<ImageEvent>(serialNumber, std::move(newCamera), *this, fourcc))).first;
-                    log("Camera ", serialNumber, " added to map.");
+                        // Add camera to list.
+                        FOURCC fourcc = getFourCCFromDescription(config["format"]["pixel"].as<std::string>());
+                        camera = cameras.insert(std::make_pair(serialNumber, std::make_unique<ImageEvent>(config.path, serialNumber, std::move(newCamera), *this, fourcc))).first;
+                        log("Camera ", serialNumber, " added to map.");
+                    }
+
+                    else
+                    {
+                        log<NUClear::WARN>("Failed to find camera", config.path, " with serial number: ", serialNumber);
+                        return;
+                    }
                 }
-
-                else
-                {
+                catch(const Spinnaker::Exception& ex) {
                     log<NUClear::WARN>("Failed to find camera", config.path, " with serial number: ", serialNumber);
                     return;
                 }

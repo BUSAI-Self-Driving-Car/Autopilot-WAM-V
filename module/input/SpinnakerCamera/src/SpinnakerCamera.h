@@ -14,8 +14,8 @@ namespace module {
 namespace input {
 
     struct ImageEvent : public Spinnaker::ImageEvent {
-        ImageEvent(const std::string& serialNumber, Spinnaker::CameraPtr&& camera, NUClear::Reactor& reactor, const utility::vision::FOURCC& fourcc)
-            : serialNumber(serialNumber), camera(std::move(camera)), reactor(reactor), fourcc(fourcc) {}
+        ImageEvent(const std::string& name, const std::string& serialNumber, Spinnaker::CameraPtr&& camera, NUClear::Reactor& reactor, const utility::vision::FOURCC& fourcc)
+            : name(name), serialNumber(serialNumber), camera(std::move(camera)), reactor(reactor), fourcc(fourcc) {}
         ~ImageEvent()
         {
             if (camera)
@@ -26,13 +26,14 @@ namespace input {
             }
         }
 
+        std::string name;
         std::string serialNumber;
         Spinnaker::CameraPtr camera;
         NUClear::Reactor& reactor;
         utility::vision::FOURCC fourcc;
 
-        void OnImageEvent(Spinnaker::ImagePtr image)
-        {
+        void OnImageEvent(Spinnaker::ImagePtr image) {
+
             // Check image retrieval status
             if (!image->IsIncomplete())
             {
