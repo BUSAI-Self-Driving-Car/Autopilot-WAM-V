@@ -8,7 +8,7 @@ import tempfile
 import b
 
 from termcolor import cprint
-from subprocess import call
+from subprocess import call, STDOUT
 
 def register(command):
 
@@ -31,17 +31,48 @@ def register(command):
         , default='hive'
         , help='the username to use when installing')
 
-def run(ip_addr, config, user, **kwargs):
+    command.add_argument('-t', '--toolchain', dest='toolchain', action='store_true')
+
+def run(ip_addr, config, user, toolchain, **kwargs):
 
     # Target location to install to
     target_dir = '{0}@{1}:/home/{0}/'.format(user, ip_addr)
     build_dir = b.binary_dir
     config_dir = os.path.join(build_dir, 'config')
+    platform_dir = '/robotx/toolchain/{0}'.format(b.cmake_cache["PLATFORM"])
 
 
     cprint('Installing binaries to ' + target_dir, 'blue', attrs=['bold'])
     files = glob.glob(os.path.join(build_dir, 'bin', '*'))
     call(['rsync', '-avzPl', '--checksum', '-e ssh'] + files + [target_dir])
+
+    # If we are going to send the toolchain
+    if toolchain:
+
+        # Get all of our required shared libraries in our toolchain and send them
+        cprint('Installing toolchain library files', 'blue', attrs=['bold'])
+        print("Platform DIR", platform_dir)
+        libs = glob.glob('{0}/lib/*.so*'.format(platform_dir))
+        call(['rsync', '-avzPl', '--checksum', '-e ssh'] + libs + [target_dir + 'toolchain'])
+
+        # Find all data files and send them
+        # Data files are located in the build directory (mixed in with the make files and CMake cache).
+        cprint('Installing data files to ' + target_dir, 'blue', attrs=['bold'])
+        files = [fn for fn in glob.glob(os.path.join(build_dir, '*'))
+                 if not os.path.basename(fn).endswith('ninja') and
+                    not os.path.basename(fn).lower().startswith('cmake') and
+                    not os.path.isdir(fn)]
+        call(['rsync', '-avzPL', '--checksum', '-e ssh'] + files + [target_dir])
+
+    # Set rpath for all libs on the remote machine
+
+        cprint('Setting rpath for all toolchain libs to {0}'.format(target_dir + 'toolchain'), 'blue', attrs=['bold'])
+        command = 'for lib in /home/{0}/toolchain/*.so*; do patchelf --set-rpath /home/{0}/toolchain $lib; done'.format(user)
+        host = '{0}@{1}'.format(user, ip_addr)
+        cprint('Running {0} on {1}'.format(command, host), 'blue', attrs=['bold'])
+        FNULL = open(os.devnull, 'w')
+        call(['ssh', host, command], stdout=FNULL, stderr=STDOUT)
+        FNULL.close()
 
     if config in ['overwrite', 'o']:
         cprint('Overwriting configuration files on target', 'blue', attrs=['bold'])
@@ -66,7 +97,7 @@ def run(ip_addr, config, user, **kwargs):
         call(['rsync', '-avzuPL', '--checksum', '-e ssh', target_dir + 'config', path])
 
 
-        cprint('Updating original configuraiton files', 'blue', attrs=['bold'])
+        cprint('Updating original configuration files', 'blue', attrs=['bold'])
         # Copy the data over to the original files
         for root, dirnames, filenames in os.walk(path):
             for filename in fnmatch.filter(filenames, '*.yaml'):
