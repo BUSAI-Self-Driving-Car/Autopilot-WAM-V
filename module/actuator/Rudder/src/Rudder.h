@@ -49,6 +49,8 @@ namespace actuator {
             using LimitType = Limit<S, D>;
             using PulseType = StepperPulse<S>;
             static constexpr enum Side side = S;
+            std::string device;
+            unsigned int baud;
             utility::io::uart uart;
             float theta_min, theta_max;
             ReactionHandle uart_handle, positive_home, negative_home;
@@ -134,9 +136,9 @@ namespace actuator {
                     std::lock_guard<std::mutex> lg(stepper.command_mutex);
                     if (!stepper.command_queue.empty())
                     {
-                        if (stepper.command_queue.front().second == false) 
-                        { 
-                            stepper.command_queue.pop_front(); 
+                        if (stepper.command_queue.front().second == false)
+                        {
+                            stepper.command_queue.pop_front();
                         }
                     }
                 }
@@ -170,7 +172,7 @@ namespace actuator {
                 if (valid)
                 {
                     std::lock_guard<std::mutex> lg(stepper.command_mutex);
-                    if (!stepper.command_queue.empty()) 
+                    if (!stepper.command_queue.empty())
                     {
                         stepper.command_queue.pop_front();
                     }
@@ -187,12 +189,12 @@ namespace actuator {
                 empty = stepper.command_queue.empty();
                 stepper.writing_command = false;
             }
-            
+
             if (empty)
             {
-                if (stepper.homed) 
+                if (stepper.homed)
                 {
-                    stepper.queue_command((stepper.moving ? "T" : "X") + std::to_string(stepper.target), true); 
+                    stepper.queue_command((stepper.moving ? "T" : "X") + std::to_string(stepper.target), true);
                 }
                 stepper.queue_command("MST");
                 stepper.queue_command("PX");
@@ -243,7 +245,7 @@ namespace actuator {
         {
             if (code & MINUS_LIMIT_SWITCH)
             {
-                emit(std::make_unique<typename StepperType::template LimitType<NEGATIVE>>()); 
+                emit(std::make_unique<typename StepperType::template LimitType<NEGATIVE>>());
             }
             if (code & PLUS_LIMIT_SWITCH)
             {
@@ -287,7 +289,15 @@ namespace actuator {
         template <typename StepperType>
         void on_watchdog(StepperType& stepper)
         {
+            log<NUClear::WARN>((stepper.side == Side::PORT ? "Port" : "Starboard"), "stepper timeout. Reconnecting...");
+
+            stepper.uart_handle.unbind();
+            stepper.uart.close();
+            stepper.uart.open(stepper.device, stepper.baud);
+            stepper.uart_handle = on<IO,Priority::HIGH>(stepper.uart.native_handle(), IO::READ).then("stepper read", [&] { read_uart(stepper); });
+
             stepper.writing_command = false;
+
             write_command(stepper);
         }
 

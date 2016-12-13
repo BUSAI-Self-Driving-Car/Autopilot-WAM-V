@@ -24,7 +24,8 @@ Rudder::Rudder(std::unique_ptr<NUClear::Environment> environment)
         port.current_limit = port_config["current_limit"].as<uint16_t>();
         port.high_speed = port_config["high_speed"].as<uint32_t>();
         port.low_speed = port_config["low_speed"].as<uint32_t>();
-        port.uart.open(port_config["device"].as<std::string>(), port_config["baud"].as<unsigned int>());
+        port.device = port_config["device"].as<std::string>();
+        port.baud = port_config["baud"].as<unsigned int>();
 
         // Setup the starboard thruster
         const auto starboard_config = config["starboard"];
@@ -34,13 +35,8 @@ Rudder::Rudder(std::unique_ptr<NUClear::Environment> environment)
         starboard.current_limit = starboard_config["current_limit"].as<uint16_t>();
         starboard.high_speed = starboard_config["high_speed"].as<uint32_t>();
         starboard.low_speed = starboard_config["low_speed"].as<uint32_t>();
-        starboard.uart.open(starboard_config["device"].as<std::string>(), starboard_config["baud"].as<unsigned int>());
-
-        port.uart_handle.unbind();
-        port.uart_handle = on<IO,Priority::HIGH>(port.uart.native_handle(), IO::READ).then("port stepper read", [this] { read_uart(port); });
-
-        starboard.uart_handle.unbind();
-        starboard.uart_handle = on<IO,Priority::HIGH>(starboard.uart.native_handle(), IO::READ).then("starboard stepper read",  [this] { read_uart(starboard); });
+        starboard.device = starboard_config["device"].as<std::string>();
+        starboard.baud = starboard_config["baud"].as<unsigned int>();
     });
 
     on<Trigger<message::propulsion::PropulsionSetpoint>>().then([this] (const message::propulsion::PropulsionSetpoint& setpoint)
