@@ -18,7 +18,6 @@ namespace sensor {
         utility::io::uart uart;
         ReactionHandle uart_handle;
         p2p_type p2p;
-        bool emitNetwork;
 
     public:
         /// @brief Called by the powerplant to build and setup the IMU reactor.

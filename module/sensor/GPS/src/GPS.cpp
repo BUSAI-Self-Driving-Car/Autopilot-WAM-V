@@ -7,12 +7,10 @@ using extension::Configuration;
 
 GPS::GPS(std::unique_ptr<NUClear::Environment> environment)
 : Reactor(std::move(environment))
-, emitNetwork(false)
 {
 
     on<Configuration>("GPS.yaml").then([this] (const Configuration& config)
     {
-        emitNetwork = config["emitNetwork"];
         // Use configuration here from file GPS.yaml
         uart.open(config["device"].as<std::string>(), config["baud"].as<unsigned int>());
 
@@ -125,13 +123,8 @@ void GPS::process()
     {
         // Geographic lattitude and and longitude
         state.timestamp = NUClear::clock::now();
-        if (emitNetwork) {
-            emit<Scope::NETWORK>(std::make_unique<message::sensor::GPSRaw>(state));
-        }
-        else {
-            emit(std::make_unique<message::sensor::GPSRaw>(state));
-        }
 
+        emit<Scope::NETWORK, Scope::LOCAL>(std::make_unique<message::sensor::GPSRaw>(state));
     }
 
 }
