@@ -10,6 +10,15 @@ namespace actuator {
 
     class Propulsion : public NUClear::Reactor {
 
+        enum SIDE
+        {
+            PORT,
+            STARBOARD
+        };
+
+        template <enum SIDE>
+        struct Torqeedo {};
+
         struct Thruster
         {
             utility::io::uart torqeedo_uart;

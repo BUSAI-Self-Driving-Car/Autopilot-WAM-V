@@ -5,9 +5,10 @@
 
 using namespace module::actuator;
 
-TorqeedoHAL::TorqeedoHAL(std::string _name, utility::io::uart &_uart)
+TorqeedoHAL::TorqeedoHAL(std::string _name, utility::io::uart &_uart, std::function<void()> watchdog)
     : name(_name)
     , uart(_uart)
+    , watchdog_func(watchdog)
 {
     torqeedo_init(&driver, name.c_str(), this);
     driver.delay_ms = delay_ms;
@@ -15,6 +16,7 @@ TorqeedoHAL::TorqeedoHAL(std::string _name, utility::io::uart &_uart)
     driver.power_high = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->power_high(); };
     driver.bus_state_receive = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->bus_state_receive(); };
     driver.bus_state_transmit = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->bus_state_transmit(); };
+    driver.service_watchdog = [](void* args) { reinterpret_cast<TorqeedoHAL*>(args)->watchdog_func(); };
     driver.packet_transmit = [](void* args, uint8_t* buf, int n) { reinterpret_cast<TorqeedoHAL*>(args)->packet_transmit(buf, n); };
     driver.status_received = [](void* args, const OUTBOARD_STATUS_T* status)
     {
@@ -46,6 +48,11 @@ void TorqeedoHAL::stop()
 void TorqeedoHAL::speed(float x)
 {
     torqeedo_set_speed(&driver, x);
+}
+
+void TorqeedoHAL::timeout()
+{
+    torqeedo_timeout(&driver);
 }
 
 void TorqeedoHAL::read()

@@ -17,13 +17,28 @@ namespace actuator {
         {
             // Setup the port thruster
             const auto port_thruster = config["thrusters"]["port"];
-            port.torqeedo.reset(new TorqeedoHAL("port", port.torqeedo_uart));
+            port.torqeedo.reset(new TorqeedoHAL("port",
+                                                port.torqeedo_uart,
+                                                [this] () { emit(std::make_unique<NUClear::message::ServiceWatchdog<Torqeedo<PORT>>>()); }));
             port.torqeedo_uart.open(port_thruster["torqeedo_device"].as<std::string>(), port_thruster["torqeedo_baud"].as<unsigned int>());
 
             // Setup the starboard thruster
             const auto starboard_thruster = config["thrusters"]["starboard"];
-            starboard.torqeedo.reset(new TorqeedoHAL("starboard", starboard.torqeedo_uart));
+            starboard.torqeedo.reset(new TorqeedoHAL("starboard",
+                                                     starboard.torqeedo_uart,
+                                                     [this] () { emit(std::make_unique<NUClear::message::ServiceWatchdog<Torqeedo<STARBOARD>>>()); }));
             starboard.torqeedo_uart.open(starboard_thruster["torqeedo_device"].as<std::string>(), starboard_thruster["torqeedo_baud"].as<unsigned int>());
+        });
+
+        on<Watchdog<Torqeedo<PORT>, 200, std::chrono::milliseconds>>().then([this]
+        {
+            log("Port torqeedo timeout");
+            port.torqeedo->timeout();
+        });
+        on<Watchdog<Torqeedo<STARBOARD>, 200, std::chrono::milliseconds>>().then([this]
+        {
+            log("Starboard torqeedo timeout");
+            starboard.torqeedo->timeout();
         });
 
         on<IO,Priority::HIGH>(port.torqeedo_uart.native_handle(), IO::READ).then("port torqeedo read", [this]
