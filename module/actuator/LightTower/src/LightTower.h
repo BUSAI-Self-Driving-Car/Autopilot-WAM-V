@@ -9,7 +9,7 @@ namespace actuator {
 
     class LightTower : public NUClear::Reactor {
 
-        static constexpr size_t MAX_RESPONSE_LENGTH = 128;
+        static constexpr size_t MAX_RESPONSE_LENGTH = 1024;
         utility::io::uart uart;
         std::string buffer;
 

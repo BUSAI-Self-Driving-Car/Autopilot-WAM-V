@@ -7,11 +7,11 @@ RequiresMountsFor=/home/robotx
 [Service]
 Type=simple
 Restart=always
-WorkingDirectory=/home/robotx/Autopilot/build
+WorkingDirectory=/home/robotx
 User=robotx
 Environment=HOME="/home/robotx/"
 PassEnvironment=HOME
-ExecStart=/home/robotx/Autopilot/build/bin/remote_control
+ExecStart=/home/robotx/robotx
 
 [Install]
 WantedBy=multi-user.target

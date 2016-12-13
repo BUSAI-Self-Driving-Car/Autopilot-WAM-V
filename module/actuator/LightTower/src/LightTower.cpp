@@ -26,7 +26,7 @@ namespace actuator {
             {
                 for (int c = uart.get(); c >= 0; c = uart.get())
                 {
-                    if (c == '\r')
+                    if (c == '\n')
                     {
                         process();
                         buffer.clear();
