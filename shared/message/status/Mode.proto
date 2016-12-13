@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package message.status;
+
+import "google/protobuf/timestamp.proto";
+
+message Mode {
+
+	enum Type {
+        NONE = 0;
+        MANUAL = 1;
+        AUTONOMOUS = 2;
+    }
+
+    google.protobuf.Timestamp timestamp = 1;
+	Type type = 2;
+}

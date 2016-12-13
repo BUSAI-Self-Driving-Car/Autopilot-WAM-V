@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package message.status;
+
+import "google/protobuf/timestamp.proto";
+
+message EStop {
+
+    google.protobuf.Timestamp timestamp = 1;
+	bool active = 2;
+}

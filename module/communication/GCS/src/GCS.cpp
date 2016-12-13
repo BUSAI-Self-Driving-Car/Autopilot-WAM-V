@@ -8,6 +8,7 @@
 #include "message/propulsion/PropulsionStop.h"
 #include "message/communication/GPSTelemetry.h"
 #include "message/sensor/GPSRaw.h"
+#include "message/status/Mode.h"
 #include <functional>
 #include <chrono>
 
@@ -21,6 +22,7 @@ namespace communication {
     using message::propulsion::PropulsionStop;
     using message::communication::GPSTelemetry;
     using message::sensor::GPSRaw;
+    using message::status::Mode;
 
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
@@ -50,6 +52,11 @@ namespace communication {
             setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
 
            emit(setpoint);
+        });
+
+        on<Startup>().then([this]()
+        {
+            emit(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
         });
 
         on<Trigger<GPSRaw>>().then("GPS Telemetry", [this](const GPSRaw& msg) {

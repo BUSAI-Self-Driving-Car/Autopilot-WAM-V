@@ -1,0 +1,82 @@
+#include "LightTower.h"
+#include <regex>
+
+#include "extension/Configuration.h"
+#include "message/status/EStop.h"
+#include "message/status/Mode.h"
+
+namespace module {
+namespace actuator {
+
+    using extension::Configuration;
+    using message::status::EStop;
+    using message::status::Mode;
+
+    LightTower::LightTower(std::unique_ptr<NUClear::Environment> environment)
+    : Reactor(std::move(environment)) {
+
+        on<Configuration>("LightTower.yaml").then([this] (const Configuration& config) {
+            // Use configuration here from file LightTower.yaml
+            uart.open(config["device"].as<std::string>(), config["baud"].as<unsigned int>());
+        });
+
+        on<IO,Priority::LOW>(uart.native_handle(), IO::READ).then("light tower read", [this]
+        {
+            if (uart.good())
+            {
+                for (int c = uart.get(); c >= 0; c = uart.get())
+                {
+                    if (c == '\r')
+                    {
+                        process();
+                        buffer.clear();
+                    }
+                    else if (buffer.size() > MAX_RESPONSE_LENGTH)
+                    {
+                        buffer.clear();
+                        log<NUClear::ERROR>("Maximum response length exceeded");
+                    }
+                    else
+                    {
+                        buffer.push_back(c);
+                    }
+                }
+            }
+        });
+
+        on<Every<500, std::chrono::milliseconds>, With<Mode>>().then([this] (const Mode& mode)
+        {
+            switch (int(mode.type))
+            {
+                case Mode::Type::MANUAL:
+                {
+                    const std::string command("light yellow\n");
+                    uart.write(command.c_str(), command.length());
+                }
+                break;
+                case Mode::Type::AUTONOMOUS:
+                {
+                    const std::string command("light green\n");
+                    uart.write(command.c_str(), command.length());
+                }
+                break;
+            }
+        });
+    }
+
+    void LightTower::process()
+    {
+        std::smatch match;
+
+        // Based on motor response
+        if (std::regex_search(buffer.cbegin(), buffer.cend(), match, std::regex("ON")))
+        {
+            emit(std::make_unique<EStop>(NUClear::clock::now(), true));
+        }
+        else if (std::regex_search(buffer.cbegin(), buffer.cend(), match, std::regex("OFF")))
+        {
+            emit(std::make_unique<EStop>(NUClear::clock::now(), false));
+        }
+    }
+}
+}
