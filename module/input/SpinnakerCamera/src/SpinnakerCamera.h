@@ -41,10 +41,10 @@ namespace input {
 
                 msg->camera_id = serialNumber;
                 msg->format = fourcc;
-                msg->dimensions[0] = image->GetWidth();
-                msg->dimensions[1] = image->GetHeight();
+                msg->dimensions[0] = 1280;//image->GetWidth();
+                msg->dimensions[1] = 1024;//image->GetHeight();
 
-                msg->payload = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(reinterpret_cast<uint8_t*>(image->GetData()), image->GetHeight(), image->GetStride());
+                msg->payload = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(reinterpret_cast<uint8_t*>(image->GetData()), 1024, 1280);
 
                 reactor.emit(msg);
             }

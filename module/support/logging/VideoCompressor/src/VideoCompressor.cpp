@@ -18,6 +18,8 @@ namespace logging {
         on<Configuration>("VideoCompressor.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file VideoCompressor.yaml
 
+            // This is the width of the image.
+            // Eventually it should be adapted as the image changes and resetting the compressor
             int width  = config["width"];
             int height = config["height"];
 
@@ -60,16 +62,16 @@ namespace logging {
             g2Encoder.inputPicture = std::unique_ptr<x264_picture_t, std::function<void(x264_picture_t*)>>(new x264_picture_t(), picture_delete);
             bEncoder.inputPicture = std::unique_ptr<x264_picture_t, std::function<void(x264_picture_t*)>>(new x264_picture_t(), picture_delete);
 
-            x264_picture_alloc(rEncoder.inputPicture.get(), X264_CSP_I420, width, height);
-            x264_picture_alloc(g1Encoder.inputPicture.get(), X264_CSP_I420, width, height);
-            x264_picture_alloc(g2Encoder.inputPicture.get(), X264_CSP_I420, width, height);
-            x264_picture_alloc(bEncoder.inputPicture.get(), X264_CSP_I420, width, height);
+            x264_picture_alloc(rEncoder.inputPicture.get(), X264_CSP_I420, width / 2, height / 2);
+            x264_picture_alloc(g1Encoder.inputPicture.get(), X264_CSP_I420, width / 2, height / 2);
+            x264_picture_alloc(g2Encoder.inputPicture.get(), X264_CSP_I420, width / 2, height / 2);
+            x264_picture_alloc(bEncoder.inputPicture.get(), X264_CSP_I420, width / 2, height / 2);
 
             // Zero out the bytes so we can just fill the Y plane
-            std::memset(rEncoder.inputPicture->img.plane[0], 0, (width * height) / 4);
-            std::memset(g1Encoder.inputPicture->img.plane[0], 0, (width * height) / 4);
-            std::memset(g2Encoder.inputPicture->img.plane[0], 0, (width * height) / 4);
-            std::memset(bEncoder.inputPicture->img.plane[0], 0, (width * height) / 4);
+            std::memset(rEncoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(g1Encoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(g2Encoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(bEncoder.inputPicture->img.plane[0], 128, (width * height) / 4);
         });
 
         on<Trigger<Image>, Buffer<4>, Sync<VideoCompressor>>().then([this] (const Image& image) {
@@ -81,18 +83,18 @@ namespace logging {
             uint8_t* bPtr  = bEncoder.inputPicture->img.plane[0];
 
             // Split out each spatial component from the bayer image
-            for (int x = 0; x < image.payload.cols(); x += 2) {
+            for (int x = 0; x < image.payload.rows(); x += 2) {
 
                 // Strip our rg row
-                auto rg = image.payload.col(x);
-                for (int y = 0; y < rg.rows(); y += 2) {
+                auto rg = image.payload.row(x);
+                for (int y = 0; y < rg.cols(); y += 2) {
                     *(rPtr++)  = rg[y];
                     *(g1Ptr++) = rg[y + 1];
                 }
 
                 // Strip our gb row
-                auto gb = image.payload.col(x + 1);
-                for (int y = 0; y < gb.rows(); y += 2) {
+                auto gb = image.payload.row(x + 1);
+                for (int y = 0; y < gb.cols(); y += 2) {
                     *(g2Ptr++)  = gb[y];
                     *(bPtr++) = gb[y + 1];
                 }
