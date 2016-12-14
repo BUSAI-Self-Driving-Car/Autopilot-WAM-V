@@ -7,6 +7,8 @@
 #include "message/sensor/GPSRaw.h"
 #include "message/sensor/IMURaw.h"
 #include "message/navigation/StateEstimate.h"
+#include "message/vision/Image.h"
+#include "message/vision/CompressedImage.h"
 
 namespace module {
 namespace support {
@@ -18,31 +20,11 @@ namespace logging {
     using message::sensor::IMURaw;
     using message::propulsion::TorqeedoStatus;
     using message::navigation::StateEstimate;
+    using message::vision::Image;
+    using message::vision::CompressedImage;
 
     DataLogging::DataLogging(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
-
-        on<Configuration, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config) {
-            std::string output_dir = config["directory"].as<std::string>();
-
-            // Make the time into a folder pattern
-            std::time_t now = time(0);
-            std::tm systemTime = *localtime(&now);
-            std::stringstream logfile;
-            logfile << output_dir
-                    << "/"
-                    << std::put_time(&systemTime, "%Y%m%dT%H_%M_%S")
-                    << ".nbs";
-
-            // Close if required then open that file
-            if (output_file.is_open()) {
-                output_file.close();
-            }
-
-            log(logfile.str());
-
-            output_file = std::ofstream(logfile.str());
-        });
 
         on<Trigger<DataLog>, Sync<DataLog>>().then([this] (const DataLog& data) {
 
@@ -85,25 +67,77 @@ namespace logging {
         });
 
         // Our actual datalogging
-        on<Trigger<GamePad>>().then([this] (const GamePad& d) {
+        handles["message.communication.GamePad"] = on<Trigger<GamePad>>().then([this] (const GamePad& d) {
             emit(log_encode(d));
-        });
+        }).disable();
 
-        on<Trigger<GPSRaw>>().then([this] (const GPSRaw& d) {
+        handles["message.sensor.GPSRaw"] = on<Trigger<GPSRaw>>().then([this] (const GPSRaw& d) {
             emit(log_encode(d));
-        });
+        }).disable();
 
-        on<Trigger<IMURaw>>().then([this] (const IMURaw& d) {
+        handles["message.sensor.IMURaw"] = on<Trigger<IMURaw>>().then([this] (const IMURaw& d) {
             emit(log_encode(d));
-        });
+        }).disable();
 
-        on<Trigger<StateEstimate>>().then([this] (const StateEstimate& d) {
+        handles["message.navigation.StateEstimate"] = on<Trigger<StateEstimate>>().then([this] (const StateEstimate& d) {
             emit(log_encode(d));
-        });
+        }).disable();
 
-        on<Trigger<TorqeedoStatus>>().then([this] (const TorqeedoStatus& d)
-        {
+        handles["message.vision.Image"] = on<Trigger<Image>>().then([this] (const Image& d) {
+            emit(log_encode(d));
+        }).disable();
+
+        handles["message.vision.CompressedImage"] = on<Trigger<CompressedImage>>().then([this] (const CompressedImage& d) {
+            emit(log_encode(d));
+        }).disable();
+
+        handles["message.propulsion.TorqueedoStatus"] = on<Trigger<TorqeedoStatus>>().then([this] (const TorqeedoStatus& d) {
            emit(log_encode(d));
+        }).disable();
+
+        on<Configuration, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config) {
+            std::string output_dir = config["directory"].as<std::string>();
+
+            // Make the time into a folder pattern
+            std::time_t now = time(0);
+            std::tm systemTime = *localtime(&now);
+            std::stringstream logfile;
+            logfile << output_dir
+                    << "/"
+                    << std::put_time(&systemTime, "%Y%m%dT%H_%M_%S")
+                    << ".nbs";
+
+            // Close if required then open that file
+            if (output_file.is_open()) {
+                output_file.close();
+            }
+
+            log(logfile.str());
+
+            output_file = std::ofstream(logfile.str());
+
+            // Enable the streams we are after
+            for (auto& setting : config["messages"].config) {
+                // Lowercase the name
+                std::string name = setting.first.as<std::string>();
+                bool enabled = setting.second.as<bool>();
+
+                if (handles.find(name) != handles.end()) {
+                    auto& handle = handles[name];
+
+                    if(enabled && !handle.enabled()) {
+                        handle.enable();
+                        log<NUClear::INFO>("Logging for", name, "enabled:");
+                    }
+                    else if(!enabled && handle.enabled()) {
+                        handle.disable();
+                        log<NUClear::INFO>("Logging for", name, "disabled:");
+                    }
+                }
+                else {
+                    log<NUClear::WARN>("This system does not know about the message type", name);
+                }
+            }
         });
     }
 }

@@ -13,6 +13,7 @@ namespace logging {
         int fd = -1;
         std::mutex fileMutex;
         std::ofstream output_file;
+        std::map<std::string, ReactionHandle> handles;
 
         struct DataLog {
             NUClear::clock::time_point timestamp;
