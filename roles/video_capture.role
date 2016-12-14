@@ -3,5 +3,6 @@ NUCLEAR_ROLE(
     support::logging::ConsoleLogHandler
     extension::FileWatcher
     input::SpinnakerCamera
+    support::logging::DataLogging
     support::logging::VideoCompressor
 )

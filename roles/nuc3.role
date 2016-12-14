@@ -3,8 +3,6 @@ NUCLEAR_ROLE(
     support::logging::ConsoleLogHandler
     extension::FileWatcher
     support::configuration::NetworkConfiguration
-    sensor::GPS
-    sensor::IMU
     input::SpinnakerCamera
     support::logging::VideoCompressor
     support::logging::DataLogging

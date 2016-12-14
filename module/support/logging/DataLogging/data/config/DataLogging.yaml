@@ -1,1 +1,10 @@
 directory: log
+
+messages:
+  message.communication.GamePad: true
+  message.sensor.GPSRaw: true
+  message.sensor.IMURaw: true
+  message.navigation.StateEstimate: true
+  message.vision.Image: true
+  message.vision.CompressedImage: true
+  message.propulsion.TorqueedoStatus: true

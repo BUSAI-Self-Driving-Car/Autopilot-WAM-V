@@ -4,4 +4,7 @@ NUCLEAR_ROLE(
     extension::FileWatcher
     support::configuration::NetworkConfiguration
     actuator::LightTower
+    input::SpinnakerCamera
+    support::logging::VideoCompressor
+    support::logging::DataLogging
 )
