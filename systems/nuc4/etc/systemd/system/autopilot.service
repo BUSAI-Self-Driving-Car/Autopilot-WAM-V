@@ -11,11 +11,7 @@ WorkingDirectory=/home/robotx
 User=robotx
 Environment=HOME="/home/robotx/"
 PassEnvironment=HOME
-ExecStart=/home/robotx/robotx
+ExecStart=/home/robotx/nuc4
 
 [Install]
 WantedBy=multi-user.target
-EOF
-
-# Enable autostarting of the service
-systemctl enable autopilot.service
