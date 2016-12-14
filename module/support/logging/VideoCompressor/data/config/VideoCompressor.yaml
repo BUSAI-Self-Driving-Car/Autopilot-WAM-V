@@ -1,0 +1,5 @@
+width: 1280
+height: 1024
+fps: 30
+crf: 25
+crf_max: 35

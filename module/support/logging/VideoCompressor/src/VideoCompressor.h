@@ -4,17 +4,12 @@
 #include <nuclear>
 #include <x264.h>
 
-extern "C" {
-    #include <libswscale/swscale.h>
-}
-
 namespace module {
 namespace support {
 namespace logging {
 
     class VideoCompressor : public NUClear::Reactor {
     private:
-        std::unique_ptr<SwsContext, std::function<void(SwsContext*)>> swsContext;
 
         struct Encoder {
             std::unique_ptr<x264_t, std::function<void(x264_t*)>> encoder;
