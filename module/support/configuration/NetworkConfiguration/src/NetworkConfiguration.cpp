@@ -17,6 +17,7 @@
 
 #include "NetworkConfiguration.h"
 
+#include <libgen.h>
 #include "extension/Configuration.h"
 
 namespace module {
@@ -28,9 +29,15 @@ namespace configuration {
     NetworkConfiguration::NetworkConfiguration(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
 
-        on<Configuration>("NetworkConfiguration.yaml").then([this] (const Configuration& config) {
+        on<Configuration, Trigger<NUClear::message::CommandLineArguments>>("NetworkConfiguration.yaml").then([this] (const Configuration& config, const NUClear::message::CommandLineArguments& argv) {
+
+            std::vector<char> data(argv[0].cbegin(), argv[0].cend());
+            data.push_back('\0');
+            const auto* base = basename(data.data());
+            std::string base_str(base);
+
             auto netConfig = std::make_unique<NUClear::message::NetworkConfiguration>();
-            netConfig->name = config["name"];
+            netConfig->name = config["name"].as<std::string>() == "" ? base_str : config["name"];
             netConfig->multicastGroup = config["address"];
             netConfig->multicastPort = config["port"];
             emit<Scope::DIRECT>(netConfig);

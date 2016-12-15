@@ -2,7 +2,9 @@ NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
     extension::FileWatcher
-    input::SpinnakerCamera
+    support::configuration::NetworkConfiguration
     support::logging::DataLogging
-    support::logging::VideoCompressor
+    sensor::NetworkRelay
+    navigation::StateEstimator
+    control::ControlAllocation
 )
