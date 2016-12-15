@@ -32,13 +32,13 @@ namespace actuator {
 
         on<Watchdog<Torqeedo<PORT>, 200, std::chrono::milliseconds>>().then([this]
         {
-
             if (!port.reconnecting)
             {
                 port.reconnecting = true;
                 log<NUClear::WARN>("Port torqeedo timeout. restarting...");
             }
 
+            if (!port.torqeedo) return;
             port.torqeedo->timeout();
         });
         on<Watchdog<Torqeedo<STARBOARD>, 200, std::chrono::milliseconds>>().then([this]
@@ -49,6 +49,7 @@ namespace actuator {
                 log<NUClear::WARN>("Port torqeedo timeout. restarting...");
             }
 
+            if (!starboard.torqeedo) return;
             starboard.torqeedo->timeout();
         });
 
