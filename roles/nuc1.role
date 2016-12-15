@@ -6,4 +6,5 @@ NUCLEAR_ROLE(
     input::SpinnakerCamera
     support::logging::VideoCompressor
     support::logging::DataLogging
+	communication::ErrorForwarder
 )

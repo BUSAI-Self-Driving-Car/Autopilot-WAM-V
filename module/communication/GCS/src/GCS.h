@@ -12,9 +12,14 @@ namespace communication {
 
     class GCS : public NUClear::Reactor {
 
+        struct PublishMessage { PublishMessage(std::string s) : str(s){} std::string str; };
         message::communication::Status lastStatus;
         uint manual_mode_type;
         message::status::Mode::Type mode;
+        static constexpr uint MAXIMUM_QUEUE_SIZE = 100;
+        std::mutex message_mutex;
+        std::queue<std::string> message_queue;
+        uint dropped_messages;
 
         void emitMode();
     public:

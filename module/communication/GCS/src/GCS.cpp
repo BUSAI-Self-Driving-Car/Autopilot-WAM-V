@@ -8,6 +8,7 @@
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
 #include "message/communication/GPSTelemetry.h"
+#include "message/communication/GCSMessage.h"
 #include "message/sensor/GPSRaw.h"
 #include "message/sensor/IMURaw.h"
 #include "message/status/Mode.h"
@@ -21,6 +22,7 @@
 namespace module {
 namespace communication {
 
+    using NUClear::message::LogMessage;
     using extension::Configuration;
     using extension::P2P;
     using message::communication::GamePad;
@@ -33,6 +35,7 @@ namespace communication {
     using message::sensor::IMURaw;
     using message::status::Mode;
     using message::communication::Status;
+    using message::communication::GCSMessage;
     using message::navigation::StateEstimate;
     using StatePolicy = utility::policy::VehicleState;
     using utility::Clock;
@@ -133,6 +136,78 @@ namespace communication {
             lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
             lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
             lastStatus.imu_feq += 1;
+        });
+
+        on<Trigger<PublishMessage>, Sync<GCS>>().then([this] (const PublishMessage& message) {
+            emit<P2P>(std::make_unique<GCSMessage>(message.str));
+        });
+
+        on<Every<500, std::chrono::milliseconds>>().then([this] () {
+            std::lock_guard<std::mutex> lg(message_mutex);
+            if (message_queue.size() > 0)
+            {
+                const auto msg = message_queue.front();
+                message_queue.pop();
+                emit(std::make_unique<PublishMessage>(msg));
+                if (dropped_messages > 0)
+                {
+                    message_queue.push("Dropped " + std::to_string(dropped_messages) + " messages.");
+                    dropped_messages = 0;
+                }
+            }
+        });
+
+        on<Network<GCSMessage>>().then([this] (const GCSMessage& message) { emit(std::make_unique<GCSMessage>(message)); });
+        on<Trigger<GCSMessage>>().then([this] (const GCSMessage& message)
+        {
+            if (message_queue.size() < MAXIMUM_QUEUE_SIZE)
+            {
+                std::lock_guard<std::mutex> lg(message_mutex);
+                message_queue.push(message.str);
+            }
+            else
+            {
+                dropped_messages++;
+            }
+        });
+
+        on<Trigger<LogMessage>>().then([this] (const LogMessage& message) {
+
+            // Where this message came from
+            std::string source = "";
+
+            // If we know where this log message came from, we display that
+            if (message.task) {
+                // Get our reactor name
+                std::string reactor = message.task->identifier[1];
+
+                // Strip to the last semicolon if we have one
+                size_t lastC = reactor.find_last_of(':');
+                reactor = lastC == std::string::npos ? reactor : reactor.substr(lastC + 1);
+
+                // This is our source
+                source = reactor + " " + (message.task->identifier[0].empty() ? "" : "- " + message.task->identifier[0] + " ");
+            }
+
+            std::string str(source);
+
+            // Output the level
+            switch(message.level)
+            {
+                case NUClear::ERROR:
+                    str += "ERROR: " + message.message;
+                    emit(std::make_unique<GCSMessage>(str));
+                    break;
+                case NUClear::FATAL:
+                    str += "FATAL: " + message.message;
+                    emit(std::make_unique<GCSMessage>(str));
+                    break;
+            case NUClear::TRACE:
+            case NUClear::DEBUG:
+            case NUClear::INFO:
+            case NUClear::WARN:
+                break;
+            }
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
