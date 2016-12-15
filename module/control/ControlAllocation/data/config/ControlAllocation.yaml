@@ -24,8 +24,8 @@ ActuatorConfig:
     M2y:  0.75              # Motor 2 starboard offset
 
 ActuatorConstraints:
-    Fmin: 600               # Minimum Force output of a single motor
-    Fmax: -340              # Maximum Force output of a single motor
+    Fmin: -340              # Minimum Force output of a single motor
+    Fmax: 600               # Maximum Force output of a single motor
     alphaMin: -1.0472       # Minimum angle of a single motor
     alphaMax: 1.0472        # Maximum angle of a single motor
     DeltaAlphaMin: -0.18    # Minimum discrete slew rate per time step of a single motor
