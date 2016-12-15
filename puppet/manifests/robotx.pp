@@ -98,6 +98,7 @@ node robotx {
                        'method'      => 'cmake', },
 
     'ffmpeg'       => {'url'         => 'http://ffmpeg.org/releases/ffmpeg-3.2.2.tar.bz2',
+                       'creates'     => 'lib/libavformat.so',
                        'args'        => { 'native'   => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ],
                                           'nuc' => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ],
                                           'e38' => [ '--enable-gpl', '--enable-shared', '--enable-libx264', ], },
