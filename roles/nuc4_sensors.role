@@ -2,7 +2,8 @@ NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
     extension::FileWatcher
-    support::logging::DataLogging
+    support::configuration::NetworkConfiguration
     sensor::GPS
     sensor::IMU
+    support::logging::DataLogging
 )

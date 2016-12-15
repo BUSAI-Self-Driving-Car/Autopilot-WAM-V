@@ -2,6 +2,9 @@ NUCLEAR_ROLE(
     support::SignalCatcher
     support::logging::ConsoleLogHandler
     extension::FileWatcher
+    support::configuration::NetworkConfiguration
     extension::SerialP2P
+    actuator::Propulsion
+    actuator::Rudder
     communication::GCS
 )
