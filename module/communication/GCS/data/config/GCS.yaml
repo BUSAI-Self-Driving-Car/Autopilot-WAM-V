@@ -1,3 +1,4 @@
 radio_device: "/dev/ttyUSB1"
 radio_baud: 115200
-manual_mode_type: 1 # 1: Manual, 2: Control Allocation, 3: Velocity Ref, 4: Position Ref
+manual_mode_type: 0 # 0: Manual, 1: Control Allocation, 2: Velocity Ref, 3: Position Ref
+velocity_muliplier: [2, 0.5, 0.41887902];

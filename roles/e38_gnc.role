@@ -7,5 +7,6 @@ NUCLEAR_ROLE(
     sensor::NetworkRelay
     navigation::StateEstimator
     control::ControlAllocation
-	communication::ErrorForwarder
+    control::PID
+    communication::ErrorForwarder
 )
