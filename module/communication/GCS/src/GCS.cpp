@@ -128,11 +128,11 @@ namespace communication {
         on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
             lastStatus.north = StatePolicy::rBNn(msg.x)[0];
             lastStatus.east = StatePolicy::rBNn(msg.x)[1];
-            lastStatus.heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(msg.x))[2];
+            lastStatus.heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(msg.x))[2] * 180.0/M_PI;
             lastStatus.surge_vel = StatePolicy::vBNb(msg.x)[0];
             lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
             lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
-            lastStatus.imu_feq += 1;
+            lastStatus.state_est_feq += 1;
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
@@ -149,7 +149,7 @@ namespace communication {
         lastStatus.mode = mode == Mode::Type::AUTONOMOUS ? 2 : 1;
         auto msg = std::make_unique<Mode>();
         msg->type = mode;
-        emit<Scope::NETWORK, Scope::LOCAL>(msg, "nuc1", true);
+        emit<Scope::NETWORK, Scope::LOCAL>(msg);
     }
 }
 }

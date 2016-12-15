@@ -46,14 +46,12 @@ namespace navigation {
             gpsVarianceDiag = config["gps_variance_diag"].as<Vector3d>();
             lagTolerance = config["lag_tolerance"].as<unsigned int>();
 
-            //TODO: Initialise State Density
-            x0 = config["x_init"].as<StateDensity::vec_type>();
-            P0_diag = config["P_init_diag"].as<StateDensity::vec_type>();
-
-            stateDensity.mean() = x0;
-            stateDensity.covariance() = P0_diag.asDiagonal();
-
+            // Initialise State Density
+            x0 = config["x_init"].as<Matrix<double,16,1>>();
+            P0_diag = config["P_init_diag"].as<Matrix<double,16,1>>();
+            stateDensity = StateDensity(x0,  P0_diag.asDiagonal());
             lastUpdatedms = utility::Clock::ToMilli(NUClear::clock::now());
+
             emitState();
 
         });
@@ -71,6 +69,9 @@ namespace navigation {
 
             lastUpdatedms = timestamp;
 
+            Eigen::Vector3d mag =  msg.magnetometer.cast<double>();
+            mag.normalize();
+
             IMUDensity::vec_type y;
             y << msg.accelerometer.cast<double>(),
                     msg.gyroscope.cast<double>(),
@@ -81,13 +82,14 @@ namespace navigation {
             IMUDensity imuDensity(y, Py);
 
             imuMeasurementUpdate(stateDensity, imuDensity);
-            log("IMU Update lag", lag);
             emitState();
 
         });
 
         on<Trigger<GPSRaw>, Sync<StateEstimator>>()
         .then("GPS Measurement", [this] (const GPSRaw& msg) {
+
+            if (msg.fix_type < GPSRaw::FixType::GPS_FIX) return;
 
             auto timestamp = utility::Clock::ToMilli(msg.timestamp);
 
@@ -107,7 +109,6 @@ namespace navigation {
             GPSDensity gpsDensity(y, Py);
             gpsMeasurementUpdate(stateDensity, gpsDensity);
 
-            log("IMU Update lag", lag);
             emitState();
 
         });
@@ -120,7 +121,7 @@ namespace navigation {
     }
 
     void StateEstimator::emitState()
-    {      
+    {
         auto msg = std::make_unique<StateEstimate>();
         msg->x = stateDensity.mean();
         msg->Px = stateDensity.covariance();
