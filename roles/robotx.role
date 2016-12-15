@@ -11,4 +11,5 @@ NUCLEAR_ROLE(
     navigation::StateEstimator
     control::ControlAllocation
     communication::GCS
+    guidance::PointAndShoot
 )
