@@ -63,10 +63,11 @@ namespace actuator {
             int pulse_min, pulse_max, target;
             float conversion;
             bool moving;
+            bool reconnecting;
 
             std::string buffer;
 
-            Stepper() : writing_command(false), homed(false), target(0), moving(false), homing(false) {}
+            Stepper() : writing_command(false), homed(false), target(0), moving(false), homing(false), reconnecting(true) {}
 
             void queue_command(const std::string& command, bool critical = false)
             {
@@ -121,6 +122,9 @@ namespace actuator {
         template <typename StepperType>
         void process(StepperType& stepper)
         {
+            // If we got data, we are not reconnecting
+            stepper.reconnecting = false;
+
             std::smatch match;
 
             // Based on motor response
@@ -289,16 +293,26 @@ namespace actuator {
         template <typename StepperType>
         void on_watchdog(StepperType& stepper)
         {
-            log<NUClear::WARN>((stepper.side == Side::PORT ? "Port" : "Starboard"), "stepper timeout. Reconnecting...");
+            // Only print that we are reconnecting once
+            if (!stepper.reconnecting) {
+                stepper.reconnecting = true;
+                log<NUClear::WARN>((stepper.side == Side::PORT ? "Port" : "Starboard"), "stepper timeout. Reconnecting...");
+            }
 
-            stepper.uart_handle.unbind();
-            stepper.uart.close();
-            stepper.uart.open(stepper.device, stepper.baud);
-            stepper.uart_handle = on<IO,Priority::HIGH>(stepper.uart.native_handle(), IO::READ).then("stepper read", [&] { read_uart(stepper); });
+            // This sometimes throws an exception
+            try {
+                stepper.uart_handle.unbind();
+                stepper.uart.close();
+                stepper.uart.open(stepper.device, stepper.baud);
+                stepper.uart_handle = on<IO,Priority::HIGH>(stepper.uart.native_handle(), IO::READ).then("stepper read", [&] { read_uart(stepper); });
 
-            stepper.writing_command = false;
+                stepper.writing_command = false;
 
-            write_command(stepper);
+                write_command(stepper);
+            }
+            // Sometimes when reconnecting there is an exception, this silences it
+            catch(const std::runtime_error&) {
+            }
         }
 
         template <typename StepperType>
