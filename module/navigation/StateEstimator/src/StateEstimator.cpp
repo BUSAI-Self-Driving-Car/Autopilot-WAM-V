@@ -36,7 +36,7 @@ namespace navigation {
             imuMeasurementModel.set_rIBb(config["rIBb"].as<Vector3d>());
             imuMeasurementModel.set_gn(config["gn"].as<Vector3d>());
             imuVarianceDiag = config["imu_variance_diag"].as<Matrix<double,9,1>>();
-           
+
             // GPS Parameters
             using namespace opengnc::common::transforms;
             Vector3d gpsOrigin = config["gps_origin"].as<Vector3d>();
@@ -62,6 +62,8 @@ namespace navigation {
         .then("IMU Measurement", [this] (const IMURaw& msg) {
             auto timestamp = utility::Clock::ToMilli(msg.timestamp);
             int lag = lastUpdatedms - timestamp;
+            lastUpdatedms = timestamp;
+
             if (lag < lagTolerance) {
 
                 if (lag < 0) {
@@ -90,8 +92,9 @@ namespace navigation {
         .then("GPS Measurement", [this] (const GPSRaw& msg) {
             auto timestamp = utility::Clock::ToMilli(msg.timestamp);
             int lag = lastUpdatedms - timestamp;
+            lastUpdatedms = timestamp;
 
-            if (lag < lagTolerance) {
+            if (lag < lagTolerance && msg.fix_type >= GPSRaw::FixType::GPS_FIX) {
 
                 if (lag < 0) {
                     double timestep = static_cast<double>(lag) / 1000;

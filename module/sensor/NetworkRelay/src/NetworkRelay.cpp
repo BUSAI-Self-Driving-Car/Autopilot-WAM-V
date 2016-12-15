@@ -19,11 +19,11 @@ namespace sensor {
         });
 
         on<Network<IMURaw>>().then([this](const IMURaw& msg) {
-           emit(std::make_unique<IMURaw>(msg));
+            emit(std::make_unique<IMURaw>(msg));
         });
 
         on<Network<GPSRaw>>().then([this](const GPSRaw& msg) {
-           emit(std::make_unique<GPSRaw>(msg));
+            emit(std::make_unique<GPSRaw>(msg));
         });
     }
 }
