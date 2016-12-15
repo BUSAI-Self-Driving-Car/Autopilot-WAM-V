@@ -17,14 +17,18 @@ namespace actuator {
 
         on<Configuration>("LightTower.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file LightTower.yaml
-            uart.open(config["device"].as<std::string>(), config["baud"].as<unsigned int>());
+            std::string device = config["device"].as<std::string>();
+            unsigned int baud = config["baud"].as<unsigned int>();
+
+            log<NUClear::INFO>("Connecting to Light Tower", device, "with baud", baud);
+            uart.open(device, baud);
         });
 
         on<IO,Priority::LOW>(uart.native_handle(), IO::READ).then("light tower read", [this]
         {
             if (uart.good())
             {
-                for (int c = uart.get(); c >= 0; c = uart.get())
+                for (int c = uart.get(); c > 0; c = uart.get())
                 {
                     if (c == '\n')
                     {
@@ -44,9 +48,7 @@ namespace actuator {
             }
         });
 
-        on<Network<Mode>>().then([this] (const Mode& mode) { emit(std::make_unique<Mode>(mode)); });
-
-        on<Every<500, std::chrono::milliseconds>, With<Mode>>().then([this] (const Mode& mode)
+        on<Every<500, std::chrono::milliseconds>, Network<Mode>>().then([this] (const Mode& mode)
         {
             switch (int(mode.type))
             {
