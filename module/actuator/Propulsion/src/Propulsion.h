@@ -21,6 +21,7 @@ namespace actuator {
 
         struct Thruster
         {
+            bool reconnecting = true;
             utility::io::uart torqeedo_uart;
             std::unique_ptr<TorqeedoHAL> torqeedo;
         };

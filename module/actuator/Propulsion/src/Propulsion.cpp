@@ -32,23 +32,52 @@ namespace actuator {
 
         on<Watchdog<Torqeedo<PORT>, 200, std::chrono::milliseconds>>().then([this]
         {
-            log("Port torqeedo timeout");
+
+            if (!port.reconnecting)
+            {
+                port.reconnecting = true;
+                log<NUClear::WARN>("Port torqeedo timeout. restarting...");
+            }
+
             port.torqeedo->timeout();
         });
         on<Watchdog<Torqeedo<STARBOARD>, 200, std::chrono::milliseconds>>().then([this]
         {
-            log("Starboard torqeedo timeout");
+            if (!starboard.reconnecting)
+            {
+                starboard.reconnecting = true;
+                log<NUClear::WARN>("Port torqeedo timeout. restarting...");
+            }
+
             starboard.torqeedo->timeout();
         });
 
         on<IO,Priority::HIGH>(port.torqeedo_uart.native_handle(), IO::READ).then("port torqeedo read", [this]
         {
-            if (port.torqeedo) { port.torqeedo->read(); }
+            if (port.torqeedo)
+            {
+                // If we get data we are not restarting anymore
+                if (port.reconnecting) {
+                    log<NUClear::INFO>("Port Torqeedo reconnected");
+                    port.reconnecting = false;
+                }
+
+                port.torqeedo->read();
+            }
         });
 
         on<IO,Priority::HIGH>(starboard.torqeedo_uart.native_handle(), IO::READ).then("starboard torqeedo read", [this]
         {
-            if (starboard.torqeedo) { starboard.torqeedo->read(); }
+            if (starboard.torqeedo)
+            {
+                // If we get data we are not restarting anymore
+                if (starboard.reconnecting) {
+                    log<NUClear::INFO>("Starboard Torqeedo reconnected");
+                    starboard.reconnecting = false;
+                }
+
+                starboard.torqeedo->read();
+            }
         });
 
         on<IO>(STDIN_FILENO, IO::READ).then([this]()

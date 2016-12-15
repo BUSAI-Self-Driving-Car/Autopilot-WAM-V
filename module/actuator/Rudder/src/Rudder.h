@@ -122,8 +122,11 @@ namespace actuator {
         template <typename StepperType>
         void process(StepperType& stepper)
         {
-            // If we got data, we are not reconnecting
-            stepper.reconnecting = false;
+            // If we were reconnecting inform that we reconnected
+            if (stepper.reconnecting) {
+                log<NUClear::INFO>((stepper.side == Side::PORT ? "Port" : "Starboard"), "stepper reconnected");
+                stepper.reconnecting = false;
+            }
 
             std::smatch match;
 
