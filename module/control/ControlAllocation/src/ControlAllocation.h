@@ -14,6 +14,7 @@ namespace control {
         explicit ControlAllocation(std::unique_ptr<NUClear::Environment> environment);
     private:
         QPControlAllocation qpControlAllocation;
+        QPControlAllocation::ActuatorConfig actuatorConfig;
         double Kfwd;
         double Krev;
         double Pfwd;

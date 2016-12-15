@@ -38,7 +38,6 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
         double qpIterations = config["qpIterations"];
 
         auto configActuatorConfig = config["ActuatorConfig"];
-        QPControlAllocation::ActuatorConfig actuatorConfig;
         actuatorConfig.M1x = configActuatorConfig["M1x"];
         actuatorConfig.M1y = configActuatorConfig["M1y"];
         actuatorConfig.M2x = configActuatorConfig["M2x"];
@@ -68,7 +67,11 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
     on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>>().then([this] (const Tau& tau, const StateEstimate& state, const PropulsionSetpoint& props) {
         if (qpControlAllocation.initialised()) {
 
-            Eigen::Vector4d cmd = qpControlAllocation(tau.value);
+            Eigen::Vector4d cmd;// = qpControlAllocation(tau.value);
+            cmd <<  tau.value(0)/2 + tau.value(2) / (2*actuatorConfig.M1y),
+                    tau.value(0)/2 - tau.value(2) / (2*actuatorConfig.M2y),
+                    0,
+                    0;
 
             VehicleState statePolicy;
 
