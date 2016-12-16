@@ -158,12 +158,16 @@ node robotx {
 
     'gmp'          => {'url'         => 'https://gmplib.org/download/gmp/gmp-6.1.1.tar.xz',
                        'creates'     => 'lib/libgmp.a',
-                       'method'      => 'cmake', },
+                       'method'      => 'autotools', },
+
+    'mpfr'         => {'url'         => 'http://www.mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz',
+                       'creates'     => 'lib/libmpfr.a',
+                       'method'      => 'autotools', },
 
     'CGAL'         => {'url'         => 'https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.9/CGAL-4.9.tar.xz',
                        'creates'     => 'lib/libCGAL.a',
                        'method'      => 'cmake', 
-                       'require'     => [ Installer['gmp'], ], },
+                       'require'     => [ Installer['gmp'], Installer['mpfr'],], },
 
 
 

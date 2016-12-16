@@ -125,7 +125,7 @@ namespace navigation {
         auto msg = std::make_unique<StateEstimate>();
         msg->x = stateDensity.mean();
         msg->Px = stateDensity.covariance();
-        emit(msg);
+        emit<Scope::LOCAL, Scope::NETWORK>(msg);
     }
 }
 }
