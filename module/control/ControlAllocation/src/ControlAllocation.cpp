@@ -118,7 +118,7 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
             setpoint->starboard.throttle = force2Torqueedo(cmd[1], u_starboard[0]);
             setpoint->starboard.azimuth = cmd[3];
 
-            emit<Scope::LOCAL, Scope::NETWORK>(setpoint);
+            emit<Scope::LOCAL, Scope::NETWORK>(setpoint, "", true);
 
             log( "Port throttle:", setpoint->port.throttle,
                  ", azimuth:",

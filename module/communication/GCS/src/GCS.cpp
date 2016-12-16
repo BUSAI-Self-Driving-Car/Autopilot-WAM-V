@@ -113,7 +113,7 @@ namespace communication {
 
                         auto tau = std::make_unique<Tau>();
                         tau->value  = input;
-                        emit<Scope::NETWORK>(tau);
+                        emit<Scope::NETWORK>(tau, "", true);
                     }
                     break;
                     case ManualModeType::VelocityRef:
@@ -126,7 +126,7 @@ namespace communication {
                         M.diagonal() = velocity_multiplier;
                         ref = M * ref;
 
-                        emit<Scope::NETWORK>(std::make_unique<VelocityReference>(NUClear::clock::now(), ref));
+                        emit<Scope::NETWORK>(std::make_unique<VelocityReference>(NUClear::clock::now(), ref), "", true);
                     }
                     break;
 //                    case ManualModeType::PositionRef:
@@ -149,7 +149,7 @@ namespace communication {
 
         on<Startup>().then([this]()
         {
-            emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL));
+            emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL), "", true);
         });
 
         on<Trigger<IMURaw>, Sync<GCS>>().then([this](const IMURaw& msg) {
@@ -163,6 +163,10 @@ namespace communication {
             lastStatus.sats = msg.satellites.size();
             lastStatus.fix = msg.fix_type.value;
             lastStatus.gps_feq += 1;
+        });
+
+        on<Network<StateEstimate>>().then("State Estimate Network", [this](const StateEstimate& msg) {
+            emit(std::make_unique<StateEstimate>(msg));
         });
 
         on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
@@ -261,7 +265,7 @@ namespace communication {
         lastStatus.mode = mode == Mode::Type::AUTONOMOUS ? 2 : 1;
         auto msg = std::make_unique<Mode>();
         msg->type = mode;
-        emit<Scope::NETWORK, Scope::LOCAL>(msg);
+        emit<Scope::NETWORK, Scope::LOCAL>(msg, "", true);
     }
 }
 }

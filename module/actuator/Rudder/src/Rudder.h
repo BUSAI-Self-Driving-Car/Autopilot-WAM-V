@@ -281,9 +281,9 @@ namespace actuator {
             if (stepper.homing) return;
             stepper.homing = true;
             stepper.homed = false;
-            emit<Scope::NETWORK>(std::make_unique<StepperStatus>(NUClear::clock::now(),
-                                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
-                                                                 stepper.homed));
+            emit(std::make_unique<StepperStatus>(NUClear::clock::now(),
+                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
+                                                 stepper.homed));
             stepper.queue_command("ABS", true);
             stepper.queue_command("ACC=" + std::to_string(stepper.acceleration), true);
             stepper.queue_command("DRVIC="+std::to_string(stepper.current_limit), true);
@@ -350,9 +350,9 @@ namespace actuator {
             stepper.positive_home.disable();
             stepper.homed = true;
             stepper.homing = false;
-            emit<Scope::NETWORK>(std::make_unique<StepperStatus>(NUClear::clock::now(),
-                                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
-                                                                 stepper.homed));
+            emit(std::make_unique<StepperStatus>(NUClear::clock::now(),
+                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
+                                                 stepper.homed));
         }
 
     public:

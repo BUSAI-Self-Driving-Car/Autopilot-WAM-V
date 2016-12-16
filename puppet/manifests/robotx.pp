@@ -162,12 +162,13 @@ node robotx {
 
     'mpfr'         => {'url'         => 'http://www.mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz',
                        'creates'     => 'lib/libmpfr.a',
-                       'method'      => 'autotools', },
+                       'method'      => 'autotools',
+                       'require'     => [ Installer['gmp'], ] },
 
     'CGAL'         => {'url'         => 'https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.9/CGAL-4.9.tar.xz',
                        'creates'     => 'lib/libCGAL.a',
-                       'method'      => 'cmake', 
-                       'require'     => [ Installer['gmp'], Installer['mpfr'],], },
+                       'method'      => 'cmake',
+                       'require'     => [ Installer['gmp'], Installer['mpfr'], ], },
 
 
 
