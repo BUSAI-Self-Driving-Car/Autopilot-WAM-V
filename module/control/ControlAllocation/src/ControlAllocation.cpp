@@ -5,6 +5,7 @@
 #include "message/control/Tau.h"
 #include "message/propulsion/PropulsionSetpoint.h"
 #include "message/navigation/StateEstimate.h"
+#include "message/control/TauOveride.h"
 #include "utility/policy/VehicleState.hpp"
 #include <opengnc/common/math.hpp>
 #include <boost/math/special_functions/sign.hpp>
@@ -17,6 +18,7 @@ using extension::Configuration;
 using message::control::Tau;
 using message::propulsion::PropulsionSetpoint;
 using message::navigation::StateEstimate;
+using message::control::TauOveride;
 using utility::policy::VehicleState;
 using boost::math::sign;
 
@@ -64,15 +66,38 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
         Maxradpersecfwd = configPropModel["Maxradpersecfwd"];
         Maxradpersecrev = configPropModel["Maxradpersecrev"];
 
-
         qpControlAllocation.init(x0, P, Q, Omega, actuatorConfig, actuatorConstraints, qpIterations);
+
+        auto tauOveride = std::make_unique<TauOveride>();
+        tauOveride->value << 0,0,0;
+        tauOveride->overide_surge = false;
+        tauOveride->overide_sway = false;
+        tauOveride->overide_yaw = false;
+        emit(tauOveride);
 
         log<NUClear::INFO>("Initialised");
     });
 
     on<Network<Tau>>().then([this] (const Tau& tau) { emit(std::make_unique<Tau>(tau)); });
-    on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>>().then([this] (const Tau& tau, const StateEstimate& state, const PropulsionSetpoint& props) {
+    on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>, With<TauOveride>>()
+            .then([this] (
+                  const Tau& tau,
+                  const StateEstimate& state,
+                  const PropulsionSetpoint& props,
+                  const TauOveride& tauOveride) {
+
         if (qpControlAllocation.initialised()) {
+
+            Eigen::Vector3d tauDesired = tau.value;
+            if (tauOveride.overide_surge) {
+                tauDesired[0] = tauOveride.value[0];
+            }
+            if (tauOveride.overide_sway){
+                tauDesired[1] = tauOveride.value[1];
+            }
+            if (tauOveride.overide_yaw) {
+                tauDesired[2] = tauOveride.value[2];
+            }
 
             Eigen::Vector4d cmd = qpControlAllocation(tau.value);
 
@@ -95,13 +120,13 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
 
             emit<Scope::LOCAL, Scope::NETWORK>(setpoint);
 
-//            log( "Port throttle:", setpoint->port.throttle,
-//                 ", azimuth:",
-//                 setpoint->port.azimuth,
-//                 ". Starboard throttle:",
-//                 setpoint->starboard.throttle,
-//                 ", azimuth:",
-//                 setpoint->starboard.azimuth);
+            log( "Port throttle:", setpoint->port.throttle,
+                 ", azimuth:",
+                 setpoint->port.azimuth,
+                 ". Starboard throttle:",
+                 setpoint->starboard.throttle,
+                 ", azimuth:",
+                 setpoint->starboard.azimuth);
         }
     });
 }
@@ -116,16 +141,9 @@ double ControlAllocation::force2Torqueedo(double F, double u)
         K = Krev;
         P = Prev;
         radpersecmax = Maxradpersecrev;
-
     }
 
-    log("force2Torqueedo F", F, "radpersecmax", radpersecmax);
-
     double radpersec = sign(F) * (u + std::sqrt(std::abs(2*F)/K))*(2*M_PI)/P;
-
-    log("force2Torqueedo F", F, "radpersec", radpersec, "radpersecmax", radpersecmax );
-
-
 
     return radpersec/radpersecmax;
 }

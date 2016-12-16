@@ -8,5 +8,6 @@ NUCLEAR_ROLE(
     navigation::StateEstimator
     control::ControlAllocation
     control::PID
+    guidance::PointAndShoot
     communication::ErrorForwarder
 )

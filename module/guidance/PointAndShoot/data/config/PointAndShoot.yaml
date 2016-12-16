@@ -1,2 +1,4 @@
+run_mode: 1
 run_time_seconds: 10
 throttle_percentage: 0.5
+forward_force: 800
