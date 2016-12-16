@@ -61,6 +61,7 @@ namespace control {
             func(config["yaw"], yaw);
         });
 
+        on<Network<VelocityReference>>().then([this](const VelocityReference& ref) { emit(std::make_unique<VelocityReference>(ref)); });
         on<Trigger<StateEstimate>, With<VelocityReference>, Optional<With<VelocityCommand>>>().then([this] (const StateEstimate& state_estimate,
                                                                                                     const VelocityReference& velocity_reference,
                                                                                                     std::shared_ptr<const VelocityCommand> velocity_command)

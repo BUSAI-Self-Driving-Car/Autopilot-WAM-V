@@ -70,6 +70,7 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
         log<NUClear::INFO>("Initialised");
     });
 
+    on<Network<Tau>>().then([this] (const Tau& tau) { emit(std::make_unique<Tau>(tau)); });
     on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>>().then([this] (const Tau& tau, const StateEstimate& state, const PropulsionSetpoint& props) {
         if (qpControlAllocation.initialised()) {
 

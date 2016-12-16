@@ -4,11 +4,17 @@
 #include "message/propulsion/PropulsionSetpoint.h"
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
+#include "message/propulsion/TorqeedoStatus.h"
+
 
 namespace module {
 namespace actuator {
 
     using extension::Configuration;
+    using message::propulsion::PropulsionSetpoint;
+    using message::propulsion::PropulsionStart;
+    using message::propulsion::PropulsionStop;
+    using message::propulsion::TorqeedoStatus;
 
     Propulsion::Propulsion(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -32,13 +38,13 @@ namespace actuator {
 
         on<Watchdog<Torqeedo<PORT>, 200, std::chrono::milliseconds>>().then([this]
         {
-
             if (!port.reconnecting)
             {
                 port.reconnecting = true;
                 log<NUClear::WARN>("Port torqeedo timeout. restarting...");
             }
 
+            if (!port.torqeedo) return;
             port.torqeedo->timeout();
         });
         on<Watchdog<Torqeedo<STARBOARD>, 200, std::chrono::milliseconds>>().then([this]
@@ -49,6 +55,7 @@ namespace actuator {
                 log<NUClear::WARN>("Port torqeedo timeout. restarting...");
             }
 
+            if (!starboard.torqeedo) return;
             starboard.torqeedo->timeout();
         });
 
@@ -89,19 +96,19 @@ namespace actuator {
             {
                 case 's':
                 {
-                    auto start = std::make_unique<message::propulsion::PropulsionStart>();
+                    auto start = std::make_unique<PropulsionStart>();
                     emit(start);
                 }
                 break;
                 case ' ':
                 {
-                    auto stop = std::make_unique<message::propulsion::PropulsionStop>();
+                    auto stop = std::make_unique<PropulsionStop>();
                     emit(stop);
                 }
                 break;
                 case '0':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0;
                     setpoint->starboard.throttle = 0;
                     emit(setpoint);
@@ -109,7 +116,7 @@ namespace actuator {
                 break;
                 case '1':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.1;
                     setpoint->starboard.throttle = 0.1;
                     emit(setpoint);
@@ -117,7 +124,7 @@ namespace actuator {
                 break;
                 case '2':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.2;
                     setpoint->starboard.throttle = 0.2;
                     emit(setpoint);
@@ -125,7 +132,7 @@ namespace actuator {
                 break;
                 case '3':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.3;
                     setpoint->starboard.throttle = 0.3;
                     emit(setpoint);
@@ -133,7 +140,7 @@ namespace actuator {
                 break;
                 case '4':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.4;
                     setpoint->starboard.throttle = 0.4;
                     emit(setpoint);
@@ -141,7 +148,7 @@ namespace actuator {
                 break;
                 case '5':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.5;
                     setpoint->starboard.throttle = 0.5;
                     emit(setpoint);
@@ -149,7 +156,7 @@ namespace actuator {
                 break;
                 case '6':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.6;
                     setpoint->starboard.throttle = 0.6;
                     emit(setpoint);
@@ -157,7 +164,7 @@ namespace actuator {
                 break;
                 case '7':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.7;
                     setpoint->starboard.throttle = 0.7;
                     emit(setpoint);
@@ -165,7 +172,7 @@ namespace actuator {
                 break;
                 case '8':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.8;
                     setpoint->starboard.throttle = 0.8;
                     emit(setpoint);
@@ -173,7 +180,7 @@ namespace actuator {
                 break;
                 case '9':
                 {
-                    auto setpoint = std::make_unique<message::propulsion::PropulsionSetpoint>();
+                    auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = 0.9;
                     setpoint->starboard.throttle = 0.9;
                     emit(setpoint);
@@ -183,26 +190,49 @@ namespace actuator {
             }
         });
 
-        on<Trigger<message::propulsion::PropulsionStart> >().then([this] ()
+        on<Trigger<TorqeedoStatus>, With<PropulsionSetpoint>>().then([this] (const TorqeedoStatus& status,
+                                                                     const PropulsionSetpoint& setpoint)
+        {
+            if (status.name == "port")
+            {
+                if (status.motor_speed != int(setpoint.port.throttle*1000))
+                {
+                    log<NUClear::ERROR>("Port throttle mismatch:", status.motor_speed, int(setpoint.port.throttle*1000));
+                }
+            }
+            else if (status.name == "starboard")
+            {
+                if (status.motor_speed != int(setpoint.starboard.throttle*1000))
+                {
+                    log<NUClear::ERROR>("Starboard throttle mismatch:", status.motor_speed, int(setpoint.starboard.throttle*1000));
+                }
+            }
+            else
+            {
+                log<NUClear::ERROR>("Unknown torqeedo side...");
+            }
+        });
+
+        on<Trigger<PropulsionStart> >().then([this] ()
         {
             log("Propulsion Start");
 
             if (port.torqeedo) { port.torqeedo->speed(0); port.torqeedo->start(); }
         });
 
-        on<Trigger<message::propulsion::PropulsionStart> >().then([this] ()
+        on<Trigger<PropulsionStart> >().then([this] ()
         {
             if (starboard.torqeedo) { starboard.torqeedo->speed(0); starboard.torqeedo->start(); }
         });
 
-        on<Trigger<message::propulsion::PropulsionStop> >().then([this] ()
+        on<Trigger<PropulsionStop> >().then([this] ()
         {
             log("STOP");
             if (port.torqeedo) { port.torqeedo->stop(); }
             if (starboard.torqeedo) { starboard.torqeedo->stop(); }
         });
 
-        on<Trigger<message::propulsion::PropulsionSetpoint> >().then([this] (const message::propulsion::PropulsionSetpoint& setpoint)
+        on<Trigger<PropulsionSetpoint> >().then([this] (const PropulsionSetpoint& setpoint)
         {
             if (port.torqeedo) { port.torqeedo->speed(setpoint.port.throttle); }
             if (starboard.torqeedo) { starboard.torqeedo->speed(setpoint.starboard.throttle); }

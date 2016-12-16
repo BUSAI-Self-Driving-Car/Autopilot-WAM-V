@@ -6,4 +6,5 @@ NUCLEAR_ROLE(
     sensor::GPS
     sensor::IMU
     support::logging::DataLogging
+	communication::ErrorForwarder
 )

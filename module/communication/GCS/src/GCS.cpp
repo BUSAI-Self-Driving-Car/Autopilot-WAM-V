@@ -7,7 +7,9 @@
 #include "message/propulsion/PropulsionSetpoint.h"
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
+#include "message/control/VelocityReference.h"
 #include "message/communication/GPSTelemetry.h"
+#include "message/communication/GCSMessage.h"
 #include "message/sensor/GPSRaw.h"
 #include "message/sensor/IMURaw.h"
 #include "message/status/Mode.h"
@@ -17,14 +19,17 @@
 #include <functional>
 #include <chrono>
 #include "utility/Clock.h"
+#include "utility/convert/yaml-eigen.h"
 
 namespace module {
 namespace communication {
 
+    using NUClear::message::LogMessage;
     using extension::Configuration;
     using extension::P2P;
     using message::communication::GamePad;
     using message::control::Tau;
+    using message::control::VelocityReference;
     using message::propulsion::PropulsionSetpoint;
     using message::propulsion::PropulsionStart;
     using message::propulsion::PropulsionStop;
@@ -33,6 +38,7 @@ namespace communication {
     using message::sensor::IMURaw;
     using message::status::Mode;
     using message::communication::Status;
+    using message::communication::GCSMessage;
     using message::navigation::StateEstimate;
     using StatePolicy = utility::policy::VehicleState;
     using utility::Clock;
@@ -45,7 +51,9 @@ namespace communication {
 
         on<Configuration>("GCS.yaml").then([this] (const Configuration& config) {
             // Use configuration here from file GCS.yaml
-            manual_mode_type = config["manual_mode_type"];
+            manual_mode_type = static_cast<ManualModeType>(config["manual_mode_type"].as<int>());
+
+            velocity_multiplier = config["velocity_multiplier"].as<Eigen::Vector3d>();
 
             auto setpoint = std::make_unique<PropulsionSetpoint>();
             setpoint->port.throttle = 0;
@@ -93,29 +101,48 @@ namespace communication {
                     log("Propulsion Stop");
                 }
 
-                if (manual_mode_type == 1) {
 
-                    // Sticks y -1 fwd, x 1 right;
+                switch(manual_mode_type)
+                {
+                    case ManualModeType::ControlAllocation:
+                    {
+                        Eigen::Vector3d input;
+                        input << -1200 * gamePad.left_analog_stick.y(),
+                                   600 * gamePad.left_analog_stick.x(),
+                                  1200 * gamePad.right_analog_stick.x();
 
-                    auto setpoint = std::make_unique<PropulsionSetpoint>();
-                    setpoint->port.throttle = -gamePad.left_analog_stick.y();
-                    setpoint->port.azimuth = -gamePad.right_analog_stick.x();
-                    setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
-                    setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
+                        auto tau = std::make_unique<Tau>();
+                        tau->value  = input;
+                        emit<Scope::NETWORK>(tau);
+                    }
+                    break;
+                    case ManualModeType::VelocityRef:
+                    {
+                        Eigen::Vector3d ref(gamePad.left_analog_stick.y(),
+                                            gamePad.left_analog_stick.x(),
+                                            gamePad.right_analog_stick.x());
 
-                    emit(setpoint);
+                        Eigen::Matrix3d M;
+                        M.diagonal() = velocity_multiplier;
+                        ref = M * ref;
 
-                }
-                else if (manual_mode_type == 2) {
+                        emit<Scope::NETWORK>(std::make_unique<VelocityReference>(NUClear::clock::now(), ref));
+                    }
+                    break;
+//                    case ManualModeType::PositionRef:
+//                    {
+//                    }
+//                    break;
+                    default:
+                    {
+                        auto setpoint = std::make_unique<PropulsionSetpoint>();
+                        setpoint->port.throttle = -gamePad.left_analog_stick.y();
+                        setpoint->port.azimuth = -gamePad.right_analog_stick.x();
+                        setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
+                        setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
 
-                    Eigen::Vector3d input;
-                    input << -1200 * gamePad.left_analog_stick.y(),
-                               600 * gamePad.left_analog_stick.x(),
-                              1200 * gamePad.right_analog_stick.x();
-
-                    auto tau = std::make_unique<Tau>();
-                    tau->value  = input;
-                    emit(tau);
+                        emit(setpoint);
+                    }
                 }
             }
         });
@@ -146,6 +173,78 @@ namespace communication {
             lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
             lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
             lastStatus.state_est_feq += 1;
+        });
+
+        on<Trigger<PublishMessage>, Sync<GCS>>().then([this] (const PublishMessage& message) {
+            emit<P2P>(std::make_unique<GCSMessage>(message.str));
+        });
+
+        on<Every<500, std::chrono::milliseconds>>().then([this] () {
+            std::lock_guard<std::mutex> lg(message_mutex);
+            if (message_queue.size() > 0)
+            {
+                const auto msg = message_queue.front();
+                message_queue.pop();
+                emit(std::make_unique<PublishMessage>(msg));
+                if (dropped_messages > 0)
+                {
+                    message_queue.push("Dropped " + std::to_string(dropped_messages) + " messages.");
+                    dropped_messages = 0;
+                }
+            }
+        });
+
+        on<Network<GCSMessage>>().then([this] (const GCSMessage& message) { emit(std::make_unique<GCSMessage>(message)); });
+        on<Trigger<GCSMessage>>().then([this] (const GCSMessage& message)
+        {
+            if (message_queue.size() < MAXIMUM_QUEUE_SIZE)
+            {
+                std::lock_guard<std::mutex> lg(message_mutex);
+                message_queue.push(message.str);
+            }
+            else
+            {
+                dropped_messages++;
+            }
+        });
+
+        on<Trigger<LogMessage>>().then([this] (const LogMessage& message) {
+
+            // Where this message came from
+            std::string source = "";
+
+            // If we know where this log message came from, we display that
+            if (message.task) {
+                // Get our reactor name
+                std::string reactor = message.task->identifier[1];
+
+                // Strip to the last semicolon if we have one
+                size_t lastC = reactor.find_last_of(':');
+                reactor = lastC == std::string::npos ? reactor : reactor.substr(lastC + 1);
+
+                // This is our source
+                source = reactor + " " + (message.task->identifier[0].empty() ? "" : "- " + message.task->identifier[0] + " ");
+            }
+
+            std::string str(source);
+
+            // Output the level
+            switch(message.level)
+            {
+                case NUClear::ERROR:
+                    str += "ERROR: " + message.message;
+                    emit(std::make_unique<GCSMessage>(str));
+                    break;
+                case NUClear::FATAL:
+                    str += "FATAL: " + message.message;
+                    emit(std::make_unique<GCSMessage>(str));
+                    break;
+            case NUClear::TRACE:
+            case NUClear::DEBUG:
+            case NUClear::INFO:
+            case NUClear::WARN:
+                break;
+            }
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
