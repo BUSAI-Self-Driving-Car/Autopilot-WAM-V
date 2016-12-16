@@ -5,6 +5,7 @@
 #include "message/sensor/IMURaw.h"
 #include "message/sensor/GPSRaw.h"
 #include "message/navigation/StateEstimate.h"
+#include "message/navigation/BoatState.h"
 #include <opengnc/common/transforms/wgs84.hpp>
 #include "utility/Clock.h"
 
@@ -15,6 +16,7 @@ namespace navigation {
     using message::sensor::IMURaw;
     using message::sensor::GPSRaw;
     using message::navigation::StateEstimate;
+    using message::navigation::BoatState;
 
     StateEstimator::StateEstimator(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
@@ -125,7 +127,17 @@ namespace navigation {
         auto msg = std::make_unique<StateEstimate>();
         msg->x = stateDensity.mean();
         msg->Px = stateDensity.covariance();
-        emit<Scope::LOCAL, Scope::NETWORK>(msg, "", true);
+        emit(msg);
+
+        auto& x = stateDensity.mean();
+        auto boatState = std::make_unique<BoatState>();
+        boatState->north = StatePolicy::rBNn(x)[0];
+        boatState->east = StatePolicy::rBNn(x)[1];
+        boatState->heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(x))[2] * 180.0/M_PI;
+        boatState->surge_vel = StatePolicy::vBNb(x)[0];
+        boatState->sway_vel = StatePolicy::vBNb(x)[1];
+        boatState->yaw_rate = StatePolicy::omegaBNb(x)[2];
+        emit<Scope::NETWORK>(boatState, "", true);
     }
 }
 }

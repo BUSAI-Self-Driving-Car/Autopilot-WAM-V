@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package message.navigation;
+
+import "google/protobuf/timestamp.proto";
+
+message BoatState {
+    google.protobuf.Timestamp timestamp = 1;
+    double north = 2;
+    double east = 3;
+    double heading = 4;
+    double surge_vel = 5;
+    double sway_vel = 6;
+    double yaw_rate = 7;
+}

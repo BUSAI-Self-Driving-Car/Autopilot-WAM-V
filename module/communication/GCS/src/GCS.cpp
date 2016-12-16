@@ -13,7 +13,7 @@
 #include "message/sensor/GPSRaw.h"
 #include "message/sensor/IMURaw.h"
 #include "message/status/Mode.h"
-#include "message/navigation/StateEstimate.h"
+#include "message/navigation/BoatState.h"
 #include "utility/policy/VehicleState.hpp"
 #include <opengnc/common/math.hpp>
 #include <functional>
@@ -39,7 +39,7 @@ namespace communication {
     using message::status::Mode;
     using message::communication::Status;
     using message::communication::GCSMessage;
-    using message::navigation::StateEstimate;
+    using message::navigation::BoatState;
     using StatePolicy = utility::policy::VehicleState;
     using utility::Clock;
 
@@ -165,17 +165,17 @@ namespace communication {
             lastStatus.gps_feq += 1;
         });
 
-        on<Network<StateEstimate>>().then("State Estimate Network", [this](const StateEstimate& msg) {
-            emit(std::make_unique<StateEstimate>(msg));
+        on<Network<BoatState>>().then("State Estimate Network", [this](const BoatState& msg) {
+            emit(std::make_unique<BoatState>(msg));
         });
 
-        on<Trigger<StateEstimate>, Sync<GCS>>().then("State Estimate Telemetry", [this](const StateEstimate& msg) {
-            lastStatus.north = StatePolicy::rBNn(msg.x)[0];
-            lastStatus.east = StatePolicy::rBNn(msg.x)[1];
-            lastStatus.heading = opengnc::common::math::eulerRotation(StatePolicy::Rnb(msg.x))[2] * 180.0/M_PI;
-            lastStatus.surge_vel = StatePolicy::vBNb(msg.x)[0];
-            lastStatus.sway_vel = StatePolicy::vBNb(msg.x)[1];
-            lastStatus.yaw_rate = StatePolicy::omegaBNb(msg.x)[2];
+        on<Trigger<BoatState>, Sync<GCS>>().then("State Estimate Telemetry", [this](const BoatState& msg) {
+            lastStatus.north = msg.north;
+            lastStatus.east = msg.east;
+            lastStatus.heading = msg.heading;
+            lastStatus.surge_vel  = msg.surge_vel;
+            lastStatus.sway_vel  = msg.sway_vel;
+            lastStatus.yaw_rate  = msg.yaw_rate;
             lastStatus.state_est_feq += 1;
         });
 
