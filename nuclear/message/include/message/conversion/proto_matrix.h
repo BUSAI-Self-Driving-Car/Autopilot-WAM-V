@@ -95,7 +95,6 @@ template <> struct DynamicProtobufToMatrixMap<::mat>  { using type = ::message::
 template <> struct DynamicProtobufToMatrixMap<::fmat> { using type = ::message::conversion::math::fmat; };
 template <> struct DynamicProtobufToMatrixMap<::imat> { using type = ::message::conversion::math::imat; };
 template <> struct DynamicProtobufToMatrixMap<::umat> { using type = ::message::conversion::math::umat; };
-template <> struct DynamicProtobufToMatrixMap<::cmat> { using type = ::message::conversion::math::cmat; };
 template <typename T>
 using DynamicMatProto = typename DynamicProtobufToMatrixMap<T>::type;
 
@@ -127,7 +126,6 @@ template <> struct DynamicMatrixToProtobufMap<::message::conversion::math::mat> 
 template <> struct DynamicMatrixToProtobufMap<::message::conversion::math::fmat> { using type = ::fmat; };
 template <> struct DynamicMatrixToProtobufMap<::message::conversion::math::imat> { using type = ::imat; };
 template <> struct DynamicMatrixToProtobufMap<::message::conversion::math::umat> { using type = ::umat; };
-template <> struct DynamicMatrixToProtobufMap<::message::conversion::math::cmat> { using type = ::cmat; };
 template <typename T>
 using DynamicProtoMat = typename DynamicMatrixToProtobufMap<T>::type;
 
@@ -355,21 +353,62 @@ inline Proto& operator<< (Proto& proto, const DynamicMatProto<Proto> matrix) {
     proto.set_rows(matrix.rows());
     proto.set_cols(matrix.cols());
 
-    // Copy the data over
-    *proto.mutable_v() = std::remove_reference_t<decltype(*proto.mutable_v())>(matrix.data(), matrix.data() + matrix.size());
+    // Allocate the memory
+    proto.mutable_v()->Resize(matrix.size(), 0);
+
+    // Copy over
+    Eigen::Map<DynamicMatProto<Proto>>(const_cast<double*>(proto.mutable_v()->data()), matrix.rows(), matrix.cols()) = matrix;
 
     return proto;
 }
 template <typename Matrix>
 inline Matrix& operator<< (Matrix& matrix, const DynamicProtoMat<Matrix> proto) {
 
-    // Resize our matrix to the correct size
-    matrix.resize(proto.rows(), proto.cols());
-
     // Copy the data over
-    std::memcpy(matrix.data(), proto.v().data(), proto.v().size());
+    matrix = Eigen::Map<const Matrix>(proto.v().data(), proto.rows(), proto.cols());
 
     return matrix;
+}
+
+inline ::message::conversion::math::cvec& operator<< (::message::conversion::math::cvec& vector, const ::cvec& proto) {
+
+    vector = Eigen::Map<const ::message::conversion::math::cvec>(reinterpret_cast<const uint8_t*>(proto.v().data()), proto.v().size());
+
+    return vector;
+}
+
+inline ::cvec& operator<< (::cvec& proto, const ::message::conversion::math::cvec& vector) {
+
+
+    proto.mutable_v()->resize(vector.size());
+
+    // Copy the data across
+    Eigen::Map<::message::conversion::math::cvec>(reinterpret_cast<uint8_t*>(const_cast<char*>(proto.mutable_v()->data())), proto.v().size()) = vector;
+
+    return proto;
+}
+
+inline ::message::conversion::math::cmat& operator<< (::message::conversion::math::cmat& matrix, const ::cmat& proto) {
+
+    // Map the data and copy it across
+    matrix = Eigen::Map<const ::message::conversion::math::cmat>(reinterpret_cast<const uint8_t*>(proto.v().data()), proto.rows(), proto.cols());
+
+    return matrix;
+}
+
+inline ::cmat& operator<< (::cmat& proto, const ::message::conversion::math::cmat& matrix) {
+
+    // Set our size
+    proto.set_rows(matrix.rows());
+    proto.set_cols(matrix.cols());
+
+    // Allocate space
+    proto.mutable_v()->resize(matrix.size());
+
+    // Copy it across
+    Eigen::Map<::message::conversion::math::cmat>(reinterpret_cast<uint8_t*>(const_cast<char*>(proto.mutable_v()->data())), matrix.rows(), matrix.cols()) = matrix;
+
+    return proto;
 }
 
 #endif  // MESSAGE_CONVERSION_PROTO_MATRIX_H
