@@ -78,8 +78,8 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
         log<NUClear::INFO>("Initialised");
     });
 
-    on<Network<Tau>>().then([this] (const Tau& tau) { emit(std::make_unique<Tau>(tau)); });
-    on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>, With<TauOveride>>()
+   // on<Network<Tau>>().then([this] (const Tau& tau) { emit(std::make_unique<Tau>(tau)); });
+    on<Trigger<Tau>, With<StateEstimate>, With<PropulsionSetpoint>, With<TauOveride>, Single>()
             .then([this] (
                   const Tau& tau,
                   const StateEstimate& state,
@@ -87,6 +87,7 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
                   const TauOveride& tauOveride) {
 
         if (qpControlAllocation.initialised()) {
+
 
             Eigen::Vector3d tauDesired = tau.value;
             if (tauOveride.overide_surge) {
@@ -98,6 +99,7 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
             if (tauOveride.overide_yaw) {
                 tauDesired[2] = tauOveride.value[2];
             }
+          //  log("tau", tau.value.transpose());
 
             Eigen::Vector4d cmd = qpControlAllocation(tau.value);
 
@@ -118,15 +120,9 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
             setpoint->starboard.throttle = force2Torqueedo(cmd[1], u_starboard[0]);
             setpoint->starboard.azimuth = cmd[3];
 
-            emit<Scope::LOCAL, Scope::NETWORK>(setpoint, "", true);
+         //   log("set",setpoint->port.throttle, setpoint->port.azimuth, setpoint->starboard.throttle, setpoint->starboard.azimuth);
 
-            log( "Port throttle:", setpoint->port.throttle,
-                 ", azimuth:",
-                 setpoint->port.azimuth,
-                 ". Starboard throttle:",
-                 setpoint->starboard.throttle,
-                 ", azimuth:",
-                 setpoint->starboard.azimuth);
+            emit<Scope::LOCAL, Scope::NETWORK>(setpoint, "", true);
         }
     });
 }

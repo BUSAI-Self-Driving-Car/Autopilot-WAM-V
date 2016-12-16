@@ -77,7 +77,6 @@ namespace communication {
         });
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad) {
-            log("Game Pad modetype", manual_mode_type);
 
             if (gamePad.LB && gamePad.down){
                 mode = Mode::Type::AUTONOMOUS;
@@ -114,7 +113,6 @@ namespace communication {
 
                         auto tau = std::make_unique<Tau>();
                         tau->value  = input;
-                        log("tau", input.transpose());
                         emit<Scope::NETWORK, Scope::LOCAL>(tau, "", true);
                     }
                     break;
