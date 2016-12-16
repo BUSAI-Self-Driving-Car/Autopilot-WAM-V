@@ -36,7 +36,7 @@ namespace navigation {
             imuMeasurementModel.set_rIBb(config["rIBb"].as<Vector3d>());
             imuMeasurementModel.set_gn(config["gn"].as<Vector3d>());
             imuVarianceDiag = config["imu_variance_diag"].as<Matrix<double,9,1>>();
-           
+
             // GPS Parameters
             using namespace opengnc::common::transforms;
             Vector3d gpsOrigin = config["gps_origin"].as<Vector3d>();
@@ -125,7 +125,7 @@ namespace navigation {
         auto msg = std::make_unique<StateEstimate>();
         msg->x = stateDensity.mean();
         msg->Px = stateDensity.covariance();
-        emit<Scope::LOCAL, Scope::NETWORK>(msg);
+        emit<Scope::LOCAL, Scope::NETWORK>(msg, "", true);
     }
 }
 }

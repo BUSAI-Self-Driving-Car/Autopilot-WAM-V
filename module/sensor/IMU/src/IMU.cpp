@@ -27,7 +27,7 @@ namespace sensor {
                 msg->gyroscope = Eigen::Map<const Eigen::Vector3f>(imu.gyroscope);
                 msg->magnetometer = Eigen::Map<const Eigen::Vector3f>(imu.magnetometer);
 
-                emit<Scope::NETWORK, Scope::LOCAL>(msg, "e38", true);
+                emit<Scope::NETWORK, Scope::LOCAL>(msg, "", true);
             });
 
             uart_handle.unbind();
