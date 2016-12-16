@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message StepperStatus
+{
+    google.protobuf.Timestamp timestamp = 1;
+    enum Side
+    {
+        PORT = 0;
+        STARBOARD = 1;
+    }
+    Side side = 2;
+    bool isValid = 3;
+}
+

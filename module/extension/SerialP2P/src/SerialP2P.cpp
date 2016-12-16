@@ -32,7 +32,7 @@ namespace extension {
                 uart.open(radioDevice, radioBaud);
             }
             catch(std::exception& ex) {
-                log(ex.what());
+                log<NUClear::ERROR>(ex.what());
             }
             log<NUClear::INFO>("P2P connected to", radioDevice, "with baud", radioBaud);
         });

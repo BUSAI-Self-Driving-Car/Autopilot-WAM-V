@@ -5,6 +5,7 @@
 #include <utility/io/uart.h>
 #include <deque>
 #include <regex>
+#include "message/propulsion/StepperStatus.h"
 
 namespace module {
 namespace actuator {
@@ -274,10 +275,15 @@ namespace actuator {
         template <typename StepperType>
         void start(StepperType& stepper)
         {
+            using message::propulsion::StepperStatus;
+
             // Configure the stepper driver
             if (stepper.homing) return;
             stepper.homing = true;
             stepper.homed = false;
+            emit<Scope::NETWORK>(std::make_unique<StepperStatus>(NUClear::clock::now(),
+                                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
+                                                                 stepper.homed));
             stepper.queue_command("ABS", true);
             stepper.queue_command("ACC=" + std::to_string(stepper.acceleration), true);
             stepper.queue_command("DRVIC="+std::to_string(stepper.current_limit), true);
@@ -332,6 +338,7 @@ namespace actuator {
         template <typename StepperType>
         void positive_limit(StepperType& stepper, const typename StepperType::PulseType& pulse)
         {
+            using message::propulsion::StepperStatus;
             log<NUClear::INFO>("Positive limit reached on side:", stepper.side);
             stepper.pulse_min = -pulse.count/2;
             stepper.pulse_max = pulse.count/2;
@@ -343,6 +350,9 @@ namespace actuator {
             stepper.positive_home.disable();
             stepper.homed = true;
             stepper.homing = false;
+            emit<Scope::NETWORK>(std::make_unique<StepperStatus>(NUClear::clock::now(),
+                                                                 stepper.side == PORT ? StepperStatus::Side::PORT : StepperStatus::Side::STARBOARD,
+                                                                 stepper.homed));
         }
 
     public:

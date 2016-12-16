@@ -4,6 +4,7 @@
 #include "extension/Configuration.h"
 #include "message/status/EStop.h"
 #include "message/status/Mode.h"
+#include "message/propulsion/PropulsionStatus.h"
 
 namespace module {
 namespace actuator {
@@ -11,6 +12,7 @@ namespace actuator {
     using extension::Configuration;
     using message::status::EStop;
     using message::status::Mode;
+    using message::propulsion::PropulsionStatus;
 
     LightTower::LightTower(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -48,22 +50,31 @@ namespace actuator {
             }
         });
 
-        on<Every<500, std::chrono::milliseconds>, Network<Mode>>().then([this] (const Mode& mode)
+        on<Every<500, std::chrono::milliseconds>, Network<Mode>, Network<PropulsionStatus>>().then([this] (const Mode& mode,
+                                                                                                   const PropulsionStatus& status)
         {
-            switch (int(mode.type))
+            if (status.enabled)
             {
-                case Mode::Type::MANUAL:
+                switch (int(mode.type))
                 {
-                    const std::string command("light yellow\n");
-                    uart.write(command.c_str(), command.length());
+                    case Mode::Type::MANUAL:
+                    {
+                        const std::string command("light yellow\n");
+                        uart.write(command.c_str(), command.length());
+                    }
+                    break;
+                    case Mode::Type::AUTONOMOUS:
+                    {
+                        const std::string command("light green\n");
+                        uart.write(command.c_str(), command.length());
+                    }
+                    break;
                 }
-                break;
-                case Mode::Type::AUTONOMOUS:
-                {
-                    const std::string command("light green\n");
-                    uart.write(command.c_str(), command.length());
-                }
-                break;
+            }
+            else
+            {
+                const std::string command("light home\n");
+                uart.write(command.c_str(), command.length());
             }
         });
     }

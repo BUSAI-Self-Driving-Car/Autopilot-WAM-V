@@ -24,12 +24,15 @@ namespace actuator {
             bool reconnecting = true;
             utility::io::uart torqeedo_uart;
             std::unique_ptr<TorqeedoHAL> torqeedo;
+            bool homed;
         };
 
         Thruster port, starboard;
 
         int i;
         bool started;
+
+        bool enabled() const { return port.homed && starboard.homed; }
 
     public:
         /// @brief Called by the powerplant to build and setup the Propulsion reactor.
