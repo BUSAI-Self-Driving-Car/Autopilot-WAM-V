@@ -252,7 +252,6 @@ namespace communication {
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
-            log("Status");
             lastStatus.num += 1;
             emit<P2P>(std::make_unique<Status>(lastStatus));
             lastStatus.gps_feq = 0;
