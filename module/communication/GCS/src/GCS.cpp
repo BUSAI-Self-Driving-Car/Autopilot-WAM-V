@@ -77,6 +77,7 @@ namespace communication {
         });
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad) {
+            log("Game Pad modetype", manual_mode_type);
 
             if (gamePad.LB && gamePad.down){
                 mode = Mode::Type::AUTONOMOUS;
@@ -113,7 +114,8 @@ namespace communication {
 
                         auto tau = std::make_unique<Tau>();
                         tau->value  = input;
-                        emit<Scope::NETWORK>(tau, "", true);
+                        log("tau", input.transpose());
+                        emit<Scope::NETWORK, Scope::LOCAL>(tau, "", true);
                     }
                     break;
                     case ManualModeType::VelocityRef:
@@ -252,6 +254,7 @@ namespace communication {
         });
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
+            log("Status");
             lastStatus.num += 1;
             emit<P2P>(std::make_unique<Status>(lastStatus));
             lastStatus.gps_feq = 0;
