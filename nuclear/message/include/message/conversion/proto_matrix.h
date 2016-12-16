@@ -4,7 +4,6 @@
 #include "math_types.h"
 #include "Vector.pb.h"
 #include "Matrix.pb.h"
-#include <iostream>
 
 namespace message {
     namespace conversion {
@@ -334,10 +333,11 @@ namespace message {
 
         template <typename Proto>
         inline Proto& convert(Proto& proto, const DynamicVecProto<Proto> vector) {
+
+            // Reserve enough space
             proto.mutable_v()->Reserve(vector.size());
 
-            std::cout << "Transmit Size " << vector.size() << std::endl;
-
+            // Populate the data
             for(int i = 0; i < vector.size(); ++i) {
                 proto.add_v(vector[i]);
             }
@@ -345,10 +345,11 @@ namespace message {
         }
         template <typename Vector>
         inline Vector& convert(Vector& vector, const DynamicProtoVec<Vector> proto) {
+
+            // Reserve enough space
             vector.resize(proto.v_size());
 
-            std::cout << "Recv Size " << proto.v_size() << std::endl;
-
+            // Populate the data
             for (int i = 0; i < proto.v_size(); ++i) {
                 vector[i] = proto.v(i);
             }
@@ -362,8 +363,6 @@ namespace message {
             proto.set_rows(matrix.rows());
             proto.set_cols(matrix.cols());
 
-            std::cout << "Transmitting dynamic matrix" << std::endl;
-
             // Allocate the memory
             proto.mutable_v()->Resize(matrix.size(), 0);
 
@@ -374,8 +373,6 @@ namespace message {
         }
         template <typename Matrix>
         inline Matrix& convert(Matrix& matrix, const DynamicProtoMat<Matrix> proto) {
-
-            std::cout << "Receiving dynamic matrix" << std::endl;
 
             // Copy the data over
             matrix = Eigen::Map<const Matrix>(proto.v().data(), proto.rows(), proto.cols());
