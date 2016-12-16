@@ -147,12 +147,12 @@ namespace communication {
             }
         });
 
-        on<Startup>().then([this]()
+        on<Startup>().then([this]
         {
             emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL), "", true);
         });
 
-        on<Trigger<IMURaw>, Sync<GCS>>().then([this](const IMURaw& msg) {
+        on<Trigger<IMURaw>, Sync<GCS>>().then([this] {
             lastStatus.imu_feq += 1;
         });
 

@@ -217,29 +217,6 @@ namespace actuator {
             }
         });
 
-        on<Trigger<TorqeedoStatus>, With<PropulsionSetpoint>>().then([this] (const TorqeedoStatus& status,
-                                                                     const PropulsionSetpoint& setpoint)
-        {
-            if (status.name == "port")
-            {
-                if (status.motor_speed != int(setpoint.port.throttle*1000))
-                {
-                    log<NUClear::ERROR>("Port throttle mismatch:", status.motor_speed, int(setpoint.port.throttle*1000));
-                }
-            }
-            else if (status.name == "starboard")
-            {
-                if (status.motor_speed != int(setpoint.starboard.throttle*1000))
-                {
-                    log<NUClear::ERROR>("Starboard throttle mismatch:", status.motor_speed, int(setpoint.starboard.throttle*1000));
-                }
-            }
-            else
-            {
-                log<NUClear::ERROR>("Unknown torqeedo side...");
-            }
-        });
-
         on<Trigger<PropulsionStart> >().then([this] ()
         {
             log("Propulsion Start");
