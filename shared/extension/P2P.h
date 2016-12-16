@@ -39,7 +39,7 @@ namespace extension {
         }
 
         template <typename DSL>
-        static inline std::shared_ptr<T> get(NUClear::threading::Reaction& t) {
+        static inline std::shared_ptr<T> get(NUClear::threading::Reaction&) {
 
             auto data = NUClear::dsl::store::ThreadStore<std::vector<char>>::value;
 

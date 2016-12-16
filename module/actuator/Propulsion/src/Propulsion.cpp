@@ -54,12 +54,10 @@ namespace actuator {
                 if (port.torqeedo) { port.torqeedo->speed(0); }
                 if (starboard.torqeedo) { starboard.torqeedo->speed(0); }
                 emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), true), "", true);
-                log("ENABLED");
             }
             else
             {
                 emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), false), "", true);
-                log("DISABLED");
             }
         });
 
@@ -217,29 +215,6 @@ namespace actuator {
             }
         });
 
-        on<Trigger<TorqeedoStatus>, With<PropulsionSetpoint>>().then([this] (const TorqeedoStatus& status,
-                                                                     const PropulsionSetpoint& setpoint)
-        {
-            if (status.name == "port")
-            {
-                if (status.motor_speed != int(setpoint.port.throttle*1000))
-                {
-                    log<NUClear::ERROR>("Port throttle mismatch:", status.motor_speed, int(setpoint.port.throttle*1000));
-                }
-            }
-            else if (status.name == "starboard")
-            {
-                if (status.motor_speed != int(setpoint.starboard.throttle*1000))
-                {
-                    log<NUClear::ERROR>("Starboard throttle mismatch:", status.motor_speed, int(setpoint.starboard.throttle*1000));
-                }
-            }
-            else
-            {
-                log<NUClear::ERROR>("Unknown torqeedo side...");
-            }
-        });
-
         on<Trigger<PropulsionStart> >().then([this] ()
         {
             log("Propulsion Start");
@@ -259,10 +234,29 @@ namespace actuator {
             if (starboard.torqeedo) { starboard.torqeedo->stop(); }
         });
 
-        on<Trigger<PropulsionSetpoint> >().then([this] (const PropulsionSetpoint& setpoint)
+        on<Network<PropulsionSetpoint>>().then([this] (const PropulsionSetpoint& setpoint)
         {
-            if (port.torqeedo && enabled()) { port.torqeedo->speed(setpoint.port.throttle); }
-            if (starboard.torqeedo && enabled()) { starboard.torqeedo->speed(setpoint.starboard.throttle); }
+            emit(std::make_unique<PropulsionSetpoint>(setpoint));
+        });
+
+        on<Every<10, Per<std::chrono::seconds>>, Trigger<PropulsionSetpoint>>().then([this] (const PropulsionSetpoint& setpoint)
+        {
+            if (port.torqeedo) {
+                if(enabled()) {
+                    port.torqeedo->speed(setpoint.port.throttle);
+                }
+                else {
+                    port.torqeedo->speed(0);
+                }
+            }
+            if (starboard.torqeedo) {
+                if(enabled()) {
+                    starboard.torqeedo->speed(setpoint.starboard.throttle);
+                }
+                else {
+                    starboard.torqeedo->speed(0);
+                }
+            }
         });
     }
 }
