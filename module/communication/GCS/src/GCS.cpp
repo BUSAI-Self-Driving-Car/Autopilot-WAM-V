@@ -56,6 +56,16 @@ namespace communication {
             mode = Mode::Type::MANUAL;
 
             emit(setpoint);
+
+//            Eigen::Vector3d input;
+//            input << -1200 * -0.0,
+//                       600 * -0.005,
+//                      1200 * 0.0;
+
+//            auto tau = std::make_unique<Tau>();
+//            tau->value  = input;
+//            emit(tau);
+
         });
 
         on<P2P<GamePad>>().then("Read", [this](const GamePad& gamePad) {
@@ -84,6 +94,9 @@ namespace communication {
                 }
 
                 if (manual_mode_type == 1) {
+
+                    // Sticks y -1 fwd, x 1 right;
+
                     auto setpoint = std::make_unique<PropulsionSetpoint>();
                     setpoint->port.throttle = -gamePad.left_analog_stick.y();
                     setpoint->port.azimuth = -gamePad.right_analog_stick.x();

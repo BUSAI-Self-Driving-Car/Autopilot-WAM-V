@@ -155,13 +155,14 @@ node robotx {
                                           'nuc' => [ '--enable-static', '--enable-shared', ],
                                           'e38' => [ '--enable-static', '--enable-shared', ], }, },
 
-    'qpOASES'      => {'url'         => 'https://www.coin-or.org/download/source/qpOASES/qpOASES-3.2.0.zip',
-                       'creates'     => 'lib/libqpOASES.a',
-                       'src_dir'     => 'qpOASES-3.2.0',
-                       'method'      => 'cmake',
-                       'args'        => { 'native'   => [ '-DCMAKE_CXX_FLAGS="-fPIC"', ],
-                                          'nuc' => [ '-DCMAKE_CXX_FLAGS="-fPIC"', ],
-                                          'e38' => [ '-DCMAKE_CXX_FLAGS="-fPIC"', ], }, },
+    'gmp'          => {'url'         => 'https://gmplib.org/download/gmp/gmp-6.1.1.tar.xz',
+                       'creates'     => 'lib/libgmp.a',
+                       'method'      => 'cmake', },
+
+    'CGAL'         => {'url'         => 'https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.9/CGAL-4.9.tar.xz',
+                       'creates'     => 'lib/libCGAL.a',
+                       'method'      => 'cmake', 
+                       'require'     => [ Installer['gmp'], ], },
 
 
 

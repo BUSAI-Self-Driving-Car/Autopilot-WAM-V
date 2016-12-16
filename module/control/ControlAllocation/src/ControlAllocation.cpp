@@ -26,6 +26,8 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
     , Krev(0)
     , Pfwd(0)
     , Prev(0)
+    , Maxradpersecfwd(1)
+    , Maxradpersecrev(1)
 {
     on<Configuration>("ControlAllocation.yaml").then([this] (const Configuration& config) {
 
@@ -59,6 +61,10 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
         Pfwd = configPropModel["Pfwd"];
         Prev = configPropModel["Prev"];
 
+        Maxradpersecfwd = configPropModel["Maxradpersecfwd"];
+        Maxradpersecrev = configPropModel["Maxradpersecrev"];
+
+
         qpControlAllocation.init(x0, P, Q, Omega, actuatorConfig, actuatorConstraints, qpIterations);
 
         log<NUClear::INFO>("Initialised");
@@ -70,14 +76,15 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
             Eigen::Vector4d cmd = qpControlAllocation(tau.value);
 
             VehicleState statePolicy;
+            Eigen::Vector3d vBNb = statePolicy.vBNb(state.x);
 
             Eigen::Vector3d thetatb_port;
             thetatb_port << 0,0, -props.port.azimuth;
-            auto u_port = opengnc::common::math::rotationEuler(thetatb_port)*statePolicy.vBNb(state.x);
+            auto u_port = opengnc::common::math::rotationEuler(thetatb_port)*vBNb;
 
             Eigen::Vector3d thetatb_starbord;
             thetatb_starbord << 0,0, -props.port.azimuth;
-            auto u_starboard = opengnc::common::math::rotationEuler(thetatb_starbord)*statePolicy.vBNb(state.x);
+            auto u_starboard = opengnc::common::math::rotationEuler(thetatb_starbord)*vBNb;
 
             auto setpoint = std::make_unique<PropulsionSetpoint>();
             setpoint->port.throttle = force2Torqueedo(cmd[0], u_port[0]);
@@ -85,13 +92,15 @@ ControlAllocation::ControlAllocation(std::unique_ptr<NUClear::Environment> envir
             setpoint->starboard.throttle = force2Torqueedo(cmd[1], u_starboard[0]);
             setpoint->starboard.azimuth = cmd[3];
 
-            log( "Port throttle:", setpoint->port.throttle,
-                 ", azimuth:",
-                 setpoint->port.azimuth,
-                 ". Starboard throttle:",
-                 setpoint->starboard.throttle,
-                 ", azimuth:",
-                 setpoint->starboard.azimuth);
+            emit<Scope::LOCAL, Scope::NETWORK>(setpoint);
+
+//            log( "Port throttle:", setpoint->port.throttle,
+//                 ", azimuth:",
+//                 setpoint->port.azimuth,
+//                 ". Starboard throttle:",
+//                 setpoint->starboard.throttle,
+//                 ", azimuth:",
+//                 setpoint->starboard.azimuth);
         }
     });
 }
@@ -109,7 +118,13 @@ double ControlAllocation::force2Torqueedo(double F, double u)
 
     }
 
+    log("force2Torqueedo F", F, "radpersecmax", radpersecmax);
+
     double radpersec = sign(F) * (u + std::sqrt(std::abs(2*F)/K))*(2*M_PI)/P;
+
+    log("force2Torqueedo F", F, "radpersec", radpersec, "radpersecmax", radpersecmax );
+
+
 
     return radpersec/radpersecmax;
 }

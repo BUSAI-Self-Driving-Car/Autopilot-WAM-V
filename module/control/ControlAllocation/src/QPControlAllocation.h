@@ -2,8 +2,13 @@
 #define QPCONTROLALLOCATION_H
 
 #include <memory>
-#include <qpOASES.hpp>
 #include <Eigen/Core>
+#include <CGAL/basic.h>
+#include <CGAL/QP_models.h>
+#include <CGAL/QP_functions.h>
+
+#include <CGAL/MP_Float.h>
+
 
 class QPControlAllocation
 {
@@ -15,7 +20,7 @@ public:
     using Matrix2s = Eigen::Matrix2d;
     using Matrix3s = Eigen::Matrix3d;
     using Matrix3x2s = Eigen::Matrix<double, 3, 2>;
-    using Matrix3x7s = Eigen::Matrix<double, 2, 7>;
+    using Matrix3x7s = Eigen::Matrix<double, 3, 7>;
     using Matrix7s = Eigen::Matrix<double, 7, 7>;
 
     struct ActuatorConfig
@@ -38,6 +43,24 @@ public:
         double DeltaAlphaMax;   // Maximum discrete angle slew rate per time step of a single motor
     };
 
+    typedef CGAL::MP_Float ET;
+
+
+    //// program and solution types
+    typedef CGAL::Quadratic_program_from_iterators
+    <double**,                                                // for A
+     double*,                                                 // for b
+     CGAL::Const_oneset_iterator<CGAL::Comparison_result>, // for r
+     bool*,                                                // for fl
+     double*,                                                 // for l
+     bool*,                                                // for fu
+     double*,                                                 // for u
+     double**,                                                // for D
+     double*>                                                 // for c
+    Program;
+    // program and solution types
+    typedef CGAL::Quadratic_program_solution<ET> Solution;
+
     QPControlAllocation();
 
     void init(Vector4s x0_,
@@ -50,9 +73,10 @@ public:
 
     Vector4s operator() (const Vector3s& tau_desired);
     inline bool initialised() const { return isInitialised; }
+    Matrix3x2s B(const Vector2s &alpha);
 
 protected:
-    Matrix3x2s B(const Vector2s &alpha);
+
     Matrix3x7s Aeq(const Vector7s& x);
     Vector7s gradient(const Vector7s& x);
     Vector7s lowerBound( const Vector7s& x);
@@ -61,7 +85,6 @@ protected:
 protected:
     bool isInitialised;
     bool isQPInitialised;
-    qpOASES::SQProblem sqproblem;
     Vector4s x0;
     Matrix7s H;
     Matrix2s P;

@@ -1,5 +1,5 @@
 #include "QPControlAllocation.h"
-#include <qpOASES/Constants.hpp>
+#include <CGAL/Quotient.h>
 
 using Vector2s = QPControlAllocation::Vector2s;
 using Vector4s = QPControlAllocation::Vector4s;
@@ -12,10 +12,13 @@ using Matrix3x7s = QPControlAllocation::Matrix3x7s;
 using Matrix7s = QPControlAllocation::Matrix7s;
 using ActuatorConfig = QPControlAllocation::ActuatorConfig;
 using ActuatorContraints = QPControlAllocation::ActuatorContraints;
+using Program = QPControlAllocation::Program;
+using Solution = QPControlAllocation::Solution;
+using ET = QPControlAllocation::ET;
+
 
 QPControlAllocation::QPControlAllocation()
     : isInitialised(false)
-    , sqproblem(7,3)
 { }
 
 void QPControlAllocation::init(Vector4s x0_, Matrix2s P_, Matrix3s Q_, Matrix2s Omega_, ActuatorConfig actuatorConfig, ActuatorContraints actuatorConstraints, double qpIterations_)
@@ -36,12 +39,12 @@ void QPControlAllocation::init(Vector4s x0_, Matrix2s P_, Matrix3s Q_, Matrix2s 
     H.topLeftCorner(2,2) = P;
     H.block(2,2,2,2) = Omega;
     H.bottomRightCorner(3,3) = Q;
+
+    H = 0.5*H;
 }
 
 Vector4s QPControlAllocation::operator ()(const Vector3s& tau_desired)
 {
-    using namespace qpOASES;
-
     if(isInitialised)
     {
         Vector7s x_prev = Vector7s::Zero();
@@ -50,9 +53,6 @@ Vector4s QPControlAllocation::operator ()(const Vector3s& tau_desired)
         Vector2s f = x_prev.segment(2,2);
         Vector2s alpha = x_prev.segment(2,2);
         Vector3s tau = B(alpha)*f;
-
-        int nWSR = 50;//nWSR = 5*(nV+nC) = 5*(7+3)
-        double xOpt[7];
 
         for(int i=0; i < qpIterations; i++)
         {
@@ -63,39 +63,36 @@ Vector4s QPControlAllocation::operator ()(const Vector3s& tau_desired)
             Vector7s lb = lowerBound(x_prev);
             Vector7s ub = upperBound(x_prev);
 
-            if(!isQPInitialised)
-            {
-                // Set Qudaratic Program
-                Options qpOptions;
-                qpOptions.enableFlippingBounds = BooleanType::BT_FALSE;
-                qpOptions.printLevel = PrintLevel::PL_NONE;
+            CGAL::Const_oneset_iterator<CGAL::Comparison_result> r(CGAL::EQUAL);
 
-                sqproblem.setOptions(qpOptions);
+            bool fu[] = {true, true, true, true, true, true, true};
+            bool fl[] = {true, true, true, true, true, true, true};
 
-                sqproblem.init(H.data(),g.data(),A.data(),lb.data(),ub.data(),b.data(),b.data(), nWSR, 0);
-                isQPInitialised = true;
+            double* Ad[] = { A.col(0).data(), A.col(1).data(), A.col(2).data(), A.col(3).data(), A.col(4).data(), A.col(5).data(), A.col(6).data() };
+            double* D[] = { H.col(0).data(), H.col(1).data(), H.col(2).data(), H.col(3).data(), H.col(4).data(), H.col(5).data(), H.col(6).data() };
+
+            Program qp(7, 3, Ad, b.data(), r, fl, lb.data(), fu, ub.data(), D, g.data(), 0);
+            Solution s =  CGAL::solve_quadratic_program(qp, ET());
+
+            Vector7s dx;
+            int pos = 0;
+            for (auto it = s.variable_values_begin(); it < s.variable_values_end(); ++it ){
+                CGAL::Quotient<CGAL::MP_Float> obj = *it;
+                dx[pos] = CGAL::to_double(obj);
+                pos++;
             }
-            else
-            {
-                nWSR = 50;
-                sqproblem.hotstart(H.data(),g.data(),A.data(),lb.data(),ub.data(),b.data(),b.data(), nWSR, 0);
-            }
 
-            if(sqproblem.getPrimalSolution(xOpt) == returnValue::SUCCESSFUL_RETURN)
-            {
-                Vector7s dx = Vector7s::Map(xOpt);
-                x_prev = x_prev + dx; //Acumilate F1, F2, alpha1, alpha2
-                x_prev.segment(4,3) = dx.segment(4,3); // Update slack
+            x_prev = x_prev + dx; //Acumilate F1, F2, alpha1, alpha2
+            x_prev.segment(4,3) = dx.segment(4,3); // Update slack
 
-                f = x_prev.segment(0,2);
-                alpha = x_prev.segment(2,2);
-                tau = B(alpha)*f;
-            }
-            else break;
+            f = x_prev.segment(0,2);
+            alpha = x_prev.segment(2,2);
+            tau = B(alpha)*f;
         }
 
         Vector4s result;
         result << f, alpha;
+        x0 = result;
         return result;
 
     } throw std::runtime_error("ControlAllocation not initialised");
@@ -123,7 +120,8 @@ Matrix3x7s QPControlAllocation::Aeq(const Vector7s& x)
                  config.M1y*std::sin(alpha(0)) + config.M1x*cos(alpha(0)),  config.M2y*std::sin(alpha(1)) + config.M2x*std::cos(alpha(1));
 
     Matrix3x7s A;
-    A.topLeftCorner(3,2) = B(alpha);
+    auto b = B(alpha);
+    A.topLeftCorner(3,2) = b;
     A.block(0,2,3,1) = dBdalpha.col(0)*f(0);
     A.block(0,3,3,1) = dBdalpha.col(1)*f(1);
     A.topRightCorner(3,3) = Matrix3s::Identity();
@@ -157,9 +155,9 @@ Vector7s QPControlAllocation::lowerBound(const Vector7s& x)
            constraints.Fmin-f(1),
            std::max(Lslew(0),Langle(0)),
            std::max(Lslew(1),Langle(1)),
-          -qpOASES::INFTY,
-          -qpOASES::INFTY,
-          -qpOASES::INFTY;
+          -1e20,
+          -1e20,
+          -1e20;
 
     return lb;
 }
@@ -182,9 +180,9 @@ Vector7s QPControlAllocation::upperBound(const Vector7s& x)
            constraints.Fmax-f(1),
            std::min(Uslew(0),Uangle(0)),
            std::min(Uslew(1),Uangle(1)),
-           qpOASES::INFTY,
-           qpOASES::INFTY,
-           qpOASES::INFTY;
+           1e20,
+           1e20,
+           1e20;
 
     return ub;
 }
