@@ -261,7 +261,7 @@ namespace communication {
         lastStatus.mode = mode == Mode::Type::AUTONOMOUS ? 2 : 1;
         auto msg = std::make_unique<Mode>();
         msg->type = mode;
-        emit<Scope::NETWORK, Scope::LOCAL>(msg);
+        emit<Scope::NETWORK, Scope::LOCAL>(msg, "nuc1_sensors", true);
     }
 }
 }

@@ -53,12 +53,12 @@ namespace actuator {
             {
                 if (port.torqeedo) { port.torqeedo->speed(0); }
                 if (starboard.torqeedo) { starboard.torqeedo->speed(0); }
-                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), true));
+                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), true), "nuc1_sensors", true);
                 log("ENABLED");
             }
             else
             {
-                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), false));
+                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), false), "nuc1_sensors", true);
                 log("DISABLED");
             }
         });
