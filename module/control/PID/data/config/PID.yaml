@@ -40,7 +40,7 @@ sway:
         sat_max: 1
         sat_min: -1
 
-heading:
+yaw:
     velocity:
         P: 1
         I: 0
