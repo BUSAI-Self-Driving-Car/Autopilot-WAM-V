@@ -5,7 +5,8 @@
 #include "message/propulsion/PropulsionStart.h"
 #include "message/propulsion/PropulsionStop.h"
 #include "message/propulsion/TorqeedoStatus.h"
-
+#include "message/propulsion/StepperStatus.h"
+#include "message/propulsion/PropulsionStatus.h"
 
 namespace module {
 namespace actuator {
@@ -15,6 +16,8 @@ namespace actuator {
     using message::propulsion::PropulsionStart;
     using message::propulsion::PropulsionStop;
     using message::propulsion::TorqeedoStatus;
+    using message::propulsion::StepperStatus;
+    using message::propulsion::PropulsionStatus;
 
     Propulsion::Propulsion(std::unique_ptr<NUClear::Environment> environment)
     : Reactor(std::move(environment)) {
@@ -34,6 +37,30 @@ namespace actuator {
                                                      starboard.torqeedo_uart,
                                                      [this] () { emit(std::make_unique<NUClear::message::ServiceWatchdog<Torqeedo<STARBOARD>>>()); }));
             starboard.torqeedo_uart.open(starboard_thruster["torqeedo_device"].as<std::string>(), starboard_thruster["torqeedo_baud"].as<unsigned int>());
+        });
+
+        on<Trigger<StepperStatus>>().then([this] (const StepperStatus& status) {
+            if (status.side == StepperStatus::Side::PORT)
+            {
+                port.homed = status.isValid;
+            }
+            else if (status.side == StepperStatus::Side::STARBOARD)
+            {
+                starboard.homed = status.isValid;
+            }
+
+            if (enabled())
+            {
+                if (port.torqeedo) { port.torqeedo->speed(0); }
+                if (starboard.torqeedo) { starboard.torqeedo->speed(0); }
+                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), true));
+                log("ENABLED");
+            }
+            else
+            {
+                emit<Scope::NETWORK>(std::make_unique<PropulsionStatus>(NUClear::clock::now(), false));
+                log("DISABLED");
+            }
         });
 
         on<Watchdog<Torqeedo<PORT>, 200, std::chrono::milliseconds>>().then([this]
@@ -234,8 +261,8 @@ namespace actuator {
 
         on<Trigger<PropulsionSetpoint> >().then([this] (const PropulsionSetpoint& setpoint)
         {
-            if (port.torqeedo) { port.torqeedo->speed(setpoint.port.throttle); }
-            if (starboard.torqeedo) { starboard.torqeedo->speed(setpoint.starboard.throttle); }
+            if (port.torqeedo && enabled()) { port.torqeedo->speed(setpoint.port.throttle); }
+            if (starboard.torqeedo && enabled()) { starboard.torqeedo->speed(setpoint.starboard.throttle); }
         });
     }
 }

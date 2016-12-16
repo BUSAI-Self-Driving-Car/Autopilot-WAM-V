@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message PropulsionStatus
+{
+    google.protobuf.Timestamp timestamp = 1;
+    bool enabled = 2;
+}
+
