@@ -2,6 +2,7 @@
 #include <iomanip>
 
 #include "extension/Configuration.h"
+#include "utility/file/fileutil.h"
 #include "message/communication/GamePad.h"
 #include "message/propulsion/TorqeedoStatus.h"
 #include "message/sensor/GPSRaw.h"
@@ -95,14 +96,20 @@ namespace logging {
            emit(log_encode(d));
         }).disable();
 
-        on<Configuration, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config) {
+        on<Configuration, Trigger<NUClear::message::CommandLineArguments>, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config, const NUClear::message::CommandLineArguments& args) {
             std::string output_dir = config["directory"].as<std::string>();
 
             // Make the time into a folder pattern
             std::time_t now = time(0);
             std::tm systemTime = *localtime(&now);
             std::stringstream logfile;
+
+            utility::file::createDir(output_dir);
+            utility::file::createDir(args[0]);
+
             logfile << output_dir
+                    << "/"
+                    << args[0]
                     << "/"
                     << std::put_time(&systemTime, "%Y%m%dT%H_%M_%S")
                     << ".nbs";
