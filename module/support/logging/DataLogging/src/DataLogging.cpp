@@ -96,7 +96,7 @@ namespace logging {
            emit(log_encode(d));
         }).disable();
 
-        on<Configuration, Trigger<NUClear::message::CommandLineArguments>, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config, const NUClear::message::CommandLineArguments& args) {
+        on<Configuration, Trigger<NUClear::message::CommandLineArguments>, Sync<DataLog>>("DataLogging.yaml").then([this] (const Configuration& config, const NUClear::message::CommandLineArguments& argv) {
             std::string output_dir = config["directory"].as<std::string>();
 
             // Make the time into a folder pattern
@@ -104,12 +104,20 @@ namespace logging {
             std::tm systemTime = *localtime(&now);
             std::stringstream logfile;
 
+
+            std::vector<char> data(argv[0].cbegin(), argv[0].cend());
+            data.push_back('\0');
+            const auto* base = basename(data.data());
+            std::string base_str(base);
+
             utility::file::createDir(output_dir);
-            utility::file::createDir(args[0]);
+
+
+            utility::file::createDir(std::string(output_dir) + "/" + base_str);
 
             logfile << output_dir
                     << "/"
-                    << args[0]
+                    << base_str
                     << "/"
                     << std::put_time(&systemTime, "%Y%m%dT%H_%M_%S")
                     << ".nbs";

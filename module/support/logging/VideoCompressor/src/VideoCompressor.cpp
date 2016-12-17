@@ -68,10 +68,10 @@ namespace logging {
             x264_picture_alloc(bEncoder.inputPicture.get(), X264_CSP_I420, width / 2, height / 2);
 
             // Zero out the bytes so we can just fill the Y plane
-            std::memset(rEncoder.inputPicture->img.plane[0], 128, (width * height) / 2);
-            std::memset(g1Encoder.inputPicture->img.plane[0], 128, (width * height) / 2);
-            std::memset(g2Encoder.inputPicture->img.plane[0], 128, (width * height) / 2);
-            std::memset(bEncoder.inputPicture->img.plane[0], 128, (width * height) / 2);
+            std::memset(rEncoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(g1Encoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(g2Encoder.inputPicture->img.plane[0], 128, (width * height) / 4);
+            std::memset(bEncoder.inputPicture->img.plane[0], 128, (width * height) / 4);
         });
 
         on<Trigger<Image>, Buffer<4>, Sync<VideoCompressor>>().then([this] (const Image& image) {

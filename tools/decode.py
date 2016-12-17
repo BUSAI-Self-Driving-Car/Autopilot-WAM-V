@@ -102,9 +102,9 @@ def run(file, **kwargs):
 
                 elif parsers[type_hash][0] == b'message.vision.CompressedImage':
                     rH264.write(msg.payloads[0])
-                    g1H264.write(msg.payloads[0])
-                    g2H264.write(msg.payloads[0])
-                    bH264.write(msg.payloads[0])
+                    g1H264.write(msg.payloads[1])
+                    g2H264.write(msg.payloads[2])
+                    bH264.write(msg.payloads[3])
 
                 else:
                     out = re.sub(r'\s+', ' ', MessageToJson(msg, True))
