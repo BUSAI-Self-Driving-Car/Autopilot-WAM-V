@@ -1,9 +1,9 @@
 lag_tolerance: 100
 
 # Process Model
-Q_omegaBNb_diag: [1e1, 1e1, 1e1]
-Q_aBNb_diag: [1, 1, 1]
-Q_gbBNi_diag: [1e-11, 1e-11, 1e-11]
+Q_omegaBNb_diag: [1e-1, 1e-1, 1e-1]
+Q_aBNb_diag: [1, 1, 1e-2]
+Q_gbBNi_diag: [1e-14, 1e-14, 1e-14]
 
 
 # Imu Measurement Model
@@ -18,18 +18,25 @@ gn: [0, 0, 9.80665]
 
 mag_scale: 1
 
-mag_vector: [0.776105, 0.165334, 0.608544] # Unit magnetic vector in {n}
+mag_vector: [0.75304, -0.16752, 0.384] # Unit magnetic vector in {n}
 
-imu_variance_diag: [3.6e-1,3.6e-1,3.6e-1, 2.5e-3,2.5e-3,2.5e-3, 1e-3,1e-3,1e-3]
+may_pca_trans:
+- [  0.35533711733458,  0.931539634559697,  -0.0772621659593901]
+- [ -0.63763020873809,  0.302002762985956,    0.708676264632497]
+- [ 0.683493416170903, -0.202554289989707,    0.701290602858611]
+
+mag_offset: [0.000123203644806703, -0.000903187644412624, 0]
+
+imu_variance_diag: [3.6e-4,3.6e-4,3.6e-4, 2.5e-6,2.5e-6,2.5e-6, 2e-1,2e-1,1e-24]
 
 # Gps Measurement Model
 gps_origin: [21.308752, -157.891869, 0] # Latitude, Longitude, Altitude
 
-gps_variance_diag: [1e1, 1e1, 1e1]
+gps_variance_diag: [1e-14, 1e-14, 1e-2]
 
 
 # Initial State
 
 x_init: [0,0,0, 1,0,0,0, 0,0,0, 0,0,0, 0,0,0]
 
-P_init_diag: [1e4,1e4,4e2, 5e-1,5e-1,5e-1,5e-1, 1e-4,1e-4,1e-4, 1e-3,1e-3,1e-3, 1,1,1]
+P_init_diag: [1e4,1e4,4, 1e-4,1e-4,1e-4,1e-4, 1e-4,1e-4,1e-4, 1e-3,1e-3,1e-3, 1,1,1]

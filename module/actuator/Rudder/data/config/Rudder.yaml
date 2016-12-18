@@ -1,17 +1,17 @@
 port:
   device: "/dev/port_stepper"
   baud: 9600
-  theta_limit: [-1.047197551, 1.047197551]   # -60 to 60 degrees
+  theta_limit: [-0.8, 0.8]   # -60 to 60 degrees
   acceleration: 100
   current_limit: 2800
-  high_speed: 40000
+  high_speed: 20000
   low_speed: 10000
 
 starboard:
   device: "/dev/starboard_stepper"
   baud: 9600
-  theta_limit: [-1.047197551, 1.047197551]   # -60 to 60 degrees
+  theta_limit: [-0.8, 0.8]   # -60 to 60 degrees
   acceleration: 100
   current_limit: 2800
-  high_speed: 40000
+  high_speed: 20000
   low_speed: 10000

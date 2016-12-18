@@ -3,20 +3,51 @@ syntax = "proto3";
 package message.communication;
 
 message Status {
-    double lat = 1;
-    double lng = 2;
-    double alt = 3;
-    uint32 sats = 4;
-    uint32 fix = 5;
-    double north = 6;
-    double east = 7;
-    double heading = 8;
-    double surge_vel = 9;
-    double sway_vel = 10;
-    double yaw_rate = 11;
-    int32 mode = 12;
-    uint32 imu_feq = 13;
-    uint32 gps_feq = 14;
-    uint32 state_est_feq = 15;
-    uint32 num = 16;
+    uint32 num = 1;
+
+    double north = 2;
+    double east = 3;
+    double down = 4;
+    double roll = 5;
+    double pitch = 6;
+    double yaw = 7;
+    double surge_vel = 8;
+    double sway_vel = 9;
+    double heave_vel = 10;
+    double roll_rate = 11;
+    double pitch_rate = 12;
+    double yaw_rate = 13;
+    double gyro_bias_r = 14;
+    double gyro_bias_p = 15;
+    double gyro_bias_y = 16;
+
+    double Pnorth = 17;
+    double Peast = 18;
+    double Pdown = 19;
+    double Pq1 = 20;
+    double Pq2 = 21;
+    double Pq3 = 22;
+    double Pq4 = 23;
+    double Psurge_vel = 24;
+    double Psway_vel = 25;
+    double Pheave_vel = 26;
+    double Proll_rate = 27;
+    double Ppitch_rate = 28;
+    double Pyaw_rate = 29;
+    double Pgyro_bias_r = 30;
+    double Pgyro_bias_p = 31;
+    double Pgyro_bias_y = 32;
+
+    double lat = 33;
+    double lng = 34;
+    double alt = 35;
+    uint32 sats = 36;
+    uint32 fix = 37;
+
+
+    int32 mode = 38;
+    uint32 imu_feq = 39;
+    uint32 gps_feq = 40;
+    uint32 state_est_feq = 41;
+    bool extremeManual = 42;
 }

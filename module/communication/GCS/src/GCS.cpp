@@ -14,6 +14,7 @@
 #include "message/sensor/IMURaw.h"
 #include "message/status/Mode.h"
 #include "message/navigation/BoatState.h"
+#include "message/propulsion/ExtremeManual.h"
 #include "utility/policy/VehicleState.hpp"
 #include <opengnc/common/math.hpp>
 #include <functional>
@@ -33,6 +34,7 @@ namespace communication {
     using message::propulsion::PropulsionSetpoint;
     using message::propulsion::PropulsionStart;
     using message::propulsion::PropulsionStop;
+    using message::propulsion::ExtremeManual;
     using message::communication::GPSTelemetry;
     using message::sensor::GPSRaw;
     using message::sensor::IMURaw;
@@ -46,6 +48,7 @@ namespace communication {
     GCS::GCS(std::unique_ptr<NUClear::Environment> environment)
         : Reactor(std::move(environment))
         , mode(Mode::Type::MANUAL)
+        , extremeManual(false)
     {
         lastStatus.num = 0;
 
@@ -64,15 +67,6 @@ namespace communication {
             mode = Mode::Type::MANUAL;
 
             emit(setpoint);
-
-//            Eigen::Vector3d input;
-//            input << -1200 * -0.0,
-//                       600 * -0.005,
-//                      1200 * 0.0;
-
-//            auto tau = std::make_unique<Tau>();
-//            tau->value  = input;
-//            emit(tau);
 
         });
 
@@ -101,6 +95,19 @@ namespace communication {
                     log("Propulsion Stop");
                 }
 
+                if (gamePad.X) {
+                    extremeManual = true;
+                    auto msg = std::unique_ptr<ExtremeManual>();
+                    msg->active = true;
+                    emit<Scope::NETWORK, Scope::LOCAL>(msg, "", true);
+                }
+                else if (gamePad.Y) {
+                    extremeManual = false;
+                    auto msg = std::unique_ptr<ExtremeManual>();
+                    msg->active = false;
+                    emit<Scope::NETWORK, Scope::LOCAL>(msg, "", true);
+                }
+
 
                 switch(manual_mode_type)
                 {
@@ -126,7 +133,7 @@ namespace communication {
                         M.diagonal() = velocity_multiplier;
                         ref = M * ref;
 
-                        emit<Scope::NETWORK>(std::make_unique<VelocityReference>(NUClear::clock::now(), ref), "", true);
+                        emit<Scope::NETWORK, Scope::LOCAL>(std::make_unique<VelocityReference>(NUClear::clock::now(), ref), "", true);
                     }
                     break;
 //                    case ManualModeType::PositionRef:
@@ -136,11 +143,18 @@ namespace communication {
                     default:
                     {
                         auto setpoint = std::make_unique<PropulsionSetpoint>();
-                        setpoint->port.throttle = -gamePad.left_analog_stick.y();
-                        setpoint->port.azimuth = -gamePad.right_analog_stick.x();
-                        setpoint->starboard.throttle = -gamePad.left_analog_stick.y();
-                        setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
-
+                        if (extremeManual) {
+                            setpoint->port.throttle = 1.0;
+                            setpoint->port.azimuth = -gamePad.right_analog_stick.x();
+                            setpoint->starboard.throttle = 1.0;
+                            setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
+                        }
+                        else {
+                            setpoint->port.throttle = -gamePad.left_analog_stick.y();
+                            setpoint->port.azimuth = -gamePad.left_analog_stick.x();
+                            setpoint->starboard.throttle = -gamePad.right_analog_stick.y();
+                            setpoint->starboard.azimuth = -gamePad.right_analog_stick.x();
+                        }
                         emit(setpoint);
                     }
                 }
@@ -152,7 +166,7 @@ namespace communication {
             emit<Scope::LOCAL, Scope::NETWORK>(std::make_unique<Mode>(NUClear::clock::now(), Mode::Type::MANUAL), "", true);
         });
 
-        on<Trigger<IMURaw>, Sync<GCS>>().then([this] {
+        on<Trigger<IMURaw>, Sync<GCS>>().then([this] () {
             lastStatus.imu_feq += 1;
         });
 
@@ -170,12 +184,40 @@ namespace communication {
         });
 
         on<Trigger<BoatState>, Sync<GCS>>().then("State Estimate Telemetry", [this](const BoatState& msg) {
+
             lastStatus.north = msg.north;
             lastStatus.east = msg.east;
-            lastStatus.heading = msg.heading;
-            lastStatus.surge_vel  = msg.surge_vel;
-            lastStatus.sway_vel  = msg.sway_vel;
-            lastStatus.yaw_rate  = msg.yaw_rate;
+            lastStatus.down = msg.down;
+            lastStatus.roll = msg.roll;
+            lastStatus.pitch = msg.pitch;
+            lastStatus.yaw = msg.yaw;
+            lastStatus.surge_vel = msg.surge_vel;
+            lastStatus.sway_vel = msg.sway_vel;
+            lastStatus.heave_vel = msg.heave_vel;
+            lastStatus.roll_rate = msg.roll_rate;
+            lastStatus.pitch_rate = msg.pitch_rate;
+            lastStatus.yaw_rate = msg.yaw_rate;
+            lastStatus.gyro_bias_r = msg.gyro_bias_r;
+            lastStatus.gyro_bias_p = msg.gyro_bias_p;
+            lastStatus.gyro_bias_y = msg.gyro_bias_y;
+            lastStatus.Pnorth = msg.Pnorth;
+            lastStatus.Peast = msg.Peast;
+            lastStatus.Pdown = msg.Pdown;
+            lastStatus.Pq1 = msg.Pq1;
+            lastStatus.Pq2 = msg.Pq2;
+            lastStatus.Pq3 = msg.Pq3;
+            lastStatus.Pq4 = msg.Pq4;
+            lastStatus.Psurge_vel = msg.Psurge_vel;
+            lastStatus.Psway_vel = msg.Psway_vel;
+            lastStatus.Pheave_vel = msg.Pheave_vel;
+            lastStatus.Proll_rate = msg.Proll_rate;
+            lastStatus.Ppitch_rate = msg.Ppitch_rate;
+            lastStatus.Pyaw_rate = msg.Pyaw_rate;
+            lastStatus.Pgyro_bias_r =msg.Pgyro_bias_r;
+            lastStatus.Pgyro_bias_p = msg.Pgyro_bias_p;
+            lastStatus.Pgyro_bias_y = msg.Pgyro_bias_y;
+
+
             lastStatus.state_est_feq += 1;
         });
 
@@ -253,6 +295,7 @@ namespace communication {
 
         on<Every<1, std::chrono::seconds>, Sync<GCS>>().then([this] {
             lastStatus.num += 1;
+            lastStatus.extremeManual = extremeManual;
             emit<P2P>(std::make_unique<Status>(lastStatus));
             lastStatus.gps_feq = 0;
             lastStatus.imu_feq = 0;

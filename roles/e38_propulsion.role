@@ -7,5 +7,9 @@ NUCLEAR_ROLE(
     actuator::Propulsion
     actuator::Rudder
     sensor::NetworkRelay
+    support::logging::DataLogging
     communication::GCS
+    navigation::StateEstimator
+    control::ControlAllocation
+    control::PID
 )

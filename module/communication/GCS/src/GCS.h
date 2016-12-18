@@ -30,6 +30,7 @@ namespace communication {
         std::queue<std::string> message_queue;
         uint dropped_messages;
         Eigen::Vector3d velocity_multiplier;
+        bool extremeManual;
 
         void emitMode();
     public:

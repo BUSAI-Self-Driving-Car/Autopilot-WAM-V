@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package message.propulsion;
+
+import "google/protobuf/timestamp.proto";
+
+message ExtremeManual
+{
+    google.protobuf.Timestamp timestamp = 1;
+    bool active = 2;
+}
