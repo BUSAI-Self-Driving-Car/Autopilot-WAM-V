@@ -1,3 +1,6 @@
-# Interface that connects to the internet
+# External ethernet port
 allow-hotplug enp3s0
 iface enp3s0 inet dhcp
+    # Use these settings to connect to the university ethernet network
+    wpa-driver wired
+    wpa-conf /etc/wpa_supplicant/newcastle_wired.conf

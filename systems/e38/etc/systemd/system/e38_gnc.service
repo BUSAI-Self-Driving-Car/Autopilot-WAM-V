@@ -1,0 +1,17 @@
+[Unit]
+Description="UoN RobotX Autopilot service"
+Wants=network.target
+After=network.target
+RequiresMountsFor=/home/robotx
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/home/robotx
+User=robotx
+Environment=HOME="/home/robotx/"
+PassEnvironment=HOME
+ExecStart=/home/robotx/e38_gnc
+
+[Install]
+WantedBy=multi-user.target

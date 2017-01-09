@@ -1,0 +1,17 @@
+[Unit]
+Description="Precision Time Protocol daemon (slave)"
+Wants=network.target
+After=network.target
+RequiresMountsFor=/root/
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/root/
+User=root
+Environment=HOME="/root/"
+PassEnvironment=HOME
+ExecStart=/usr/local/sbin/ptpd2 -C -s -i enp0s25
+
+[Install]
+WantedBy=multi-user.target

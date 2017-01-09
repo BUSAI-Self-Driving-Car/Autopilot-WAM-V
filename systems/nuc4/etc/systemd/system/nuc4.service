@@ -1,0 +1,17 @@
+[Unit]
+Description="Main NUC vision task"
+Wants=network.target
+After=network.target
+RequiresMountsFor=/home/robotx
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/home/robotx
+User=robotx
+Environment=HOME="/home/robotx/"
+PassEnvironment=HOME
+ExecStart=/home/robotx/nuc4
+
+[Install]
+WantedBy=multi-user.target
