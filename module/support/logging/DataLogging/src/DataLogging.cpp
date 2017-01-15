@@ -49,9 +49,9 @@ namespace logging {
             uint32_t size = data.data.size() + sizeof(data.hash) + sizeof(timestamp_us);
 
             // Write radiation symbol
-            output_file.put(0xE2);
-            output_file.put(0x98);
-            output_file.put(0xA2);
+            output_file.put(char(0xE2));
+            output_file.put(char(0x98));
+            output_file.put(char(0xA2));
 
             // Write the size of the packet
             output_file.write(reinterpret_cast<const char*>(&size), sizeof(size));
@@ -104,17 +104,19 @@ namespace logging {
             std::tm systemTime = *localtime(&now);
             std::stringstream logfile;
 
-
+            // Get the name of the currently running binary
             std::vector<char> data(argv[0].cbegin(), argv[0].cend());
             data.push_back('\0');
             const auto* base = basename(data.data());
             std::string base_str(base);
 
+            // Create a directory in our output folder
             utility::file::createDir(output_dir);
 
-
+            // Create a directory for our binary name
             utility::file::createDir(std::string(output_dir) + "/" + base_str);
 
+            // Create our log file full output path
             logfile << output_dir
                     << "/"
                     << base_str
@@ -127,8 +129,9 @@ namespace logging {
                 output_file.close();
             }
 
-            log(logfile.str());
+            log<NUClear::INFO>("Logging to", logfile.str());
 
+            // Open the file
             output_file = std::ofstream(logfile.str());
 
             // Enable the streams we are after
