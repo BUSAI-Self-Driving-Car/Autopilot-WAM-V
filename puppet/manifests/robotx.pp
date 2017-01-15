@@ -38,7 +38,7 @@ node robotx {
                        'postbuild'   => 'rm PREFIX/lib/libprotoc* && rm PREFIX/bin/protoc',
                        'method'      => 'autotools', },
 
-    'zlib'         => {'url'         => 'http://zlib.net/zlib-1.2.8.tar.gz',
+    'zlib'         => {'url'         => 'http://zlib.net/zlib-1.2.10.tar.gz',
                        'creates'     => 'lib/libz.a',
                        'method'      => 'cmake',},
 
